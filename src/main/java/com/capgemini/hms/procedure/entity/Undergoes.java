@@ -36,7 +36,7 @@ public class Undergoes {
 
     @ManyToOne
     @MapsId("procedure")
-    @JoinColumn(name = "procedure", referencedColumnName = "code")
+    @JoinColumn(name = "`procedure`", referencedColumnName = "code")
     private Procedure procedure;
 
     @ManyToOne
