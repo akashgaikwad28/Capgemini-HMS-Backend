@@ -42,11 +42,11 @@ public class Appointment {
     @JoinColumn(name = "physician", referencedColumnName = "employeeid")
     private Physician physician;
 
-    @Column(name = "end_time")
-    private LocalDateTime end;
-
-    @Column(name = "start_time")
+    @Column(name = "`start`", nullable = false)
     private LocalDateTime start;
+
+    @Column(name = "`end`", nullable = false)
+    private LocalDateTime end;
 
     @Column(name = "examinationroom", nullable = false)
     private String examinationRoom;
