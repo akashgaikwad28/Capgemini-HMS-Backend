@@ -33,9 +33,10 @@ public class OnCall {
     private Nurse nurse;
 
     @ManyToOne
+    @MapsId("block")
     @JoinColumns({
-        @JoinColumn(name = "blockfloor", referencedColumnName = "blockfloor", insertable = false, updatable = false),
-        @JoinColumn(name = "blockcode", referencedColumnName = "blockcode", insertable = false, updatable = false)
+        @JoinColumn(name = "blockfloor", referencedColumnName = "blockfloor"),
+        @JoinColumn(name = "blockcode", referencedColumnName = "blockcode")
     })
     private Block block;
 }
