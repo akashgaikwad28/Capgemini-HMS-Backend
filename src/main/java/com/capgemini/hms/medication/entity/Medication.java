@@ -74,4 +74,5 @@ public class Medication {
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
     }
+    
 }
