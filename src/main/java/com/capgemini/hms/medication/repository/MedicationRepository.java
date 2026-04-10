@@ -18,3 +18,4 @@ public interface MedicationRepository extends JpaRepository<Medication, Integer>
     @Query("SELECT m FROM Medication m WHERE m.isDeleted = false AND (LOWER(m.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(m.brand) LIKE LOWER(CONCAT('%', :query, '%')))")
     Page<Medication> searchActive(@Param("query") String query, Pageable pageable);
 }
+
