@@ -30,3 +30,23 @@ public class PhysicianController {
         this.staffService = staffService;
     }
 
+    @GetMapping
+    @Operation(summary = "Get all physicians", description = "Returns a paginated list of all active physicians")
+    public ResponseEntity<ApiResponse<PagedResponse<PhysicianDTO>>> getAllPhysicians(Pageable pageable) {
+        Page<Physician> page = staffService.getAllPhysicians(pageable);
+        List<PhysicianDTO> content = page.getContent().stream()
+                .map(p -> new PhysicianDTO(p.getEmployeeId(), p.getName(), p.getPosition(), p.getSsn()))
+                .collect(Collectors.toList());
+        PagedResponse<PhysicianDTO> pagedResponse = new PagedResponse<>(content, page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages(), page.isLast());
+        return ResponseEntity.ok(ApiResponse.success(pagedResponse));
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get physician by ID", description = "Returns profile details for a specific active physician")
+    public ResponseEntity<ApiResponse<PhysicianDTO>> getPhysicianById(@PathVariable Integer id) {
+        return staffService.getPhysicianById(id)
+                .map(p -> ResponseEntity.ok(ApiResponse.success(new PhysicianDTO(p.getEmployeeId(), p.getName(), p.getPosition(), p.getSsn()))))
+                .orElseThrow(() -> new RuntimeException("Physician not found with ID: " + id));
+    }
+
+
