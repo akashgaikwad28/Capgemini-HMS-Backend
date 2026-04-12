@@ -2,17 +2,14 @@ package com.capgemini.hms.appointment.service;
 
 import com.capgemini.hms.appointment.entity.Appointment;
 import com.capgemini.hms.appointment.repository.AppointmentRepository;
-import com.capgemini.hms.nurse.entity.Nurse;
 import com.capgemini.hms.nurse.repository.NurseRepository;
-import com.capgemini.hms.patient.entity.Patient;
 import com.capgemini.hms.patient.repository.PatientRepository;
-import com.capgemini.hms.physician.entity.Physician;
 import com.capgemini.hms.physician.repository.PhysicianRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 
