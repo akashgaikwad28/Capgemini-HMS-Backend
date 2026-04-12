@@ -10,17 +10,18 @@ import com.capgemini.hms.auth.payload.response.JwtResponse;
 import com.capgemini.hms.auth.payload.response.MessageResponse;
 import com.capgemini.hms.auth.repository.RoleRepository;
 import com.capgemini.hms.auth.repository.UserRepository;
-import com.capgemini.hms.patient.repository.PatientRepository;
 import com.capgemini.hms.common.dto.ApiResponse;
+import com.capgemini.hms.patient.repository.PatientRepository;
 import com.capgemini.hms.security.jwt.JwtUtils;
 import com.capgemini.hms.security.services.UserDetailsImpl;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,9 +29,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
