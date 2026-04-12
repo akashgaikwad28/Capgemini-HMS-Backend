@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head>
+    <title>Physician Directory - MedCare HMS</title>
+</head>
+<body>
+    <section class="p-8 min-h-screen">
+        <!-- Header Section -->
+        <div class="mb-10">
+            <h1 class="text-4xl font-extrabold text-sky-900 tracking-tight mb-2 font-headline">Physician Directory</h1>
+            <p class="text-slate-500 max-w-2xl font-medium">Access our global network of specialized practitioners. Advanced filtering allows for precise diagnostic matching based on expertise and performance metrics.</p>
+        </div>
+
+        <!-- Filter Bar (Departments) -->
+        <div class="mb-8 overflow-x-auto">
+            <div class="flex items-center gap-3 min-w-max pb-2">
+                <button class="px-6 py-2.5 rounded-full bg-gradient-to-r from-primary to-primary-container text-white font-semibold text-sm shadow-md shadow-primary/20 hover:scale-105 transition-transform">
+                    All Specialties
+                </button>
+                <button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold text-sm hover:bg-surface-container-highest transition-colors">
+                    Cardiology
+                </button>
+                <button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold text-sm hover:bg-surface-container-highest transition-colors">
+                    Neurology
+                </button>
+                <button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold text-sm hover:bg-surface-container-highest transition-colors">
+                    Oncology
+                </button>
+                <button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold text-sm hover:bg-surface-container-highest transition-colors">
+                    Pediatrics
+                </button>
+                <button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold text-sm hover:bg-surface-container-highest transition-colors">
+                    Orthopedics
+                </button>
+                <button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold text-sm hover:bg-surface-container-highest transition-colors">
+                    Psychiatry
+                </button>
+            </div>
+        </div>
+
+        <!-- Doctor Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <!-- Doctor Card 1 -->
+            <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm shadow-sky-900/5 group hover:shadow-xl hover:shadow-sky-900/10 transition-all duration-300 flex flex-col">
+                <div class="relative mb-4 overflow-hidden rounded-xl aspect-[4/5] bg-slate-200">
+                    <img alt="Dr. Sarah Jenkins" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPj-zPLg012nc9HsUE0xFyhkoGC-8mkAfF7uc5cKZcSrEZnXRgd9FYYbisMMETBj0b00ot-kn96D3fLhJFSveds3CwCxd8Fd1cMPxHNI3xcSQ2H4SrymASqDggkEojHFjNo3RaBHkxlTqV8rXVC3gkbMdVCjrfDrOTLoaOqyy3wp4gP5Y6-eq498RX5T32eV1wEzhu9dmFfkJLl2-1A0d-MnOrcFz7t10AsWw8fJ98WazXD5PfsHd2dWEpZd3Q0vwsXhLzA38l_Te6"/>
+                    <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold text-sky-900 uppercase tracking-widest shadow-sm">
+                        On Duty
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-bold text-on-surface mb-0.5 group-hover:text-primary transition-colors">Dr. Sarah Jenkins</h3>
+                    <p class="text-xs font-semibold text-primary-container mb-3">Senior Cardiologist</p>
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[11px] font-bold">
+                            Cardiology
+                        </span>
+                        <span class="bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-[11px] font-bold flex items-center">
+                            <span class="material-symbols-outlined text-[14px] mr-1" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+                            4.9
+                        </span>
+                    </div>
+                    <div class="space-y-2 mb-6">
+                        <div class="flex items-center text-on-surface-variant text-xs">
+                            <span class="material-symbols-outlined text-[18px] mr-2 text-slate-400" data-icon="work">work</span>
+                            <span>12 Years Experience</span>
+                        </div>
+                        <div class="flex items-center text-on-surface-variant text-xs">
+                            <span class="material-symbols-outlined text-[18px] mr-2 text-slate-400" data-icon="task_alt">task_alt</span>
+                            <span class="font-bold">1,240 Cases Handled</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="w-full py-3 bg-surface-container-high text-on-surface font-bold text-sm rounded-xl hover:bg-primary hover:text-white transition-all">
+                    View Full Profile
+                </button>
+            </div>
+
+            <!-- Doctor Card 2 -->
+            <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm shadow-sky-900/5 group hover:shadow-xl hover:shadow-sky-900/10 transition-all duration-300 flex flex-col">
+                <div class="relative mb-4 overflow-hidden rounded-xl aspect-[4/5] bg-slate-200">
+                    <img alt="Dr. Marcus Thorne" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcA2lH7xpoCPgK5iFYzhq4sJ4gJdUNQ9mmrLycCPDAVyvLvmloJH98M7YsTtYlRC-hTLLb5wc9kirOiw564Q8IGXih8lVew7PaIBg3SClpUXGx0aiSgNdAXBp8PV0qnWWNTZmkPdImHAHDttr9PMFlU9DjCh4eSwpir1oJBvFSXXuEKxUmPcQpF-97ezY77kDIJmk65XntQsUeVJrwZlNTHP-gQNTfXzfzYexgAV1lWsBqCfhLTwNUUZFCjGkUnkSRASV6QtOSRUxn"/>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-bold text-on-surface mb-0.5 group-hover:text-primary transition-colors">Dr. Marcus Thorne</h3>
+                    <p class="text-xs font-semibold text-primary-container mb-3">Chief of Neurology</p>
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[11px] font-bold">
+                            Neurology
+                        </span>
+                        <span class="bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-[11px] font-bold flex items-center">
+                            <span class="material-symbols-outlined text-[14px] mr-1" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+                            5.0
+                        </span>
+                    </div>
+                    <div class="space-y-2 mb-6">
+                        <div class="flex items-center text-on-surface-variant text-xs">
+                            <span class="material-symbols-outlined text-[18px] mr-2 text-slate-400" data-icon="work">work</span>
+                            <span>18 Years Experience</span>
+                        </div>
+                        <div class="flex items-center text-on-surface-variant text-xs">
+                            <span class="material-symbols-outlined text-[18px] mr-2 text-slate-400" data-icon="task_alt">task_alt</span>
+                            <span class="font-bold">2,105 Cases Handled</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="w-full py-3 bg-surface-container-high text-on-surface font-bold text-sm rounded-xl hover:bg-primary hover:text-white transition-all">
+                    View Full Profile
+                </button>
+            </div>
+
+            <!-- Doctor Card 3 -->
+            <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm shadow-sky-900/5 group hover:shadow-xl hover:shadow-sky-900/10 transition-all duration-300 flex flex-col">
+                <div class="relative mb-4 overflow-hidden rounded-xl aspect-[4/5] bg-slate-200">
+                    <img alt="Dr. David Chen" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChRoJgMocNm4G_6LMwXkLwXwm3GECwE5yieVInEgkvd1s8IufHJyapJJ0XZ1SAFfYrv_cGoeHB3lnsj-OJ0wJqIYXGNDdul7UdrGO7L0ihWsbLjiydeECiwL17T9e9MM0HAPTL8pREiW_APuaZfp7BOizu7shuEp1CL0aPMuAWqHzaX88vG19AHijYDceN4gvnVQpDArLrt6g5EAqOehWq-5OOo6UKHnlurvoqX4MatyOee8eyCDr_vdkhT_knThp2QitUttaPLqJa"/>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-bold text-on-surface mb-0.5 group-hover:text-primary transition-colors">Dr. David Chen</h3>
+                    <p class="text-xs font-semibold text-primary-container mb-3">Orthopedic Surgeon</p>
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[11px] font-bold">
+                            Orthopedics
+                        </span>
+                        <span class="bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-[11px] font-bold flex items-center">
+                            <span class="material-symbols-outlined text-[14px] mr-1" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+                            4.6
+                        </span>
+                    </div>
+                    <div class="space-y-2 mb-6">
+                        <div class="flex items-center text-on-surface-variant text-xs">
+                            <span class="material-symbols-outlined text-[18px] mr-2 text-slate-400" data-icon="work">work</span>
+                            <span>6 Years Experience</span>
+                        </div>
+                        <div class="flex items-center text-on-surface-variant text-xs">
+                            <span class="material-symbols-outlined text-[18px] mr-2 text-slate-400" data-icon="task_alt">task_alt</span>
+                            <span class="font-bold">720 Cases Handled</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="w-full py-3 bg-surface-container-high text-on-surface font-bold text-sm rounded-xl hover:bg-primary hover:text-white transition-all">
+                    View Full Profile
+                </button>
+            </div>
+        </div>
+
+        <!-- Pagination / Load More -->
+        <div class="mt-12 flex justify-center">
+            <button class="flex items-center gap-2 px-8 py-4 bg-surface-container-low text-primary font-bold rounded-xl hover:bg-primary-container hover:text-white transition-all shadow-sm">
+                <span>Load More Physicians</span>
+                <span class="material-symbols-outlined text-[20px]" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+            </button>
+        </div>
+    </section>
+</body>
+</html>

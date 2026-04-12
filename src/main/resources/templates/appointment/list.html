@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head>
+    <title>Appointments - MedCare HMS</title>
+</head>
+<body>
+    <section class="p-8 min-h-screen">
+        <!-- Header Section -->
+        <div class="flex justify-between items-end mb-10">
+            <div>
+                <h2 class="text-3xl font-extrabold tracking-tight text-on-surface font-headline">Appointments</h2>
+                <p class="text-on-surface-variant mt-1">Manage scheduled sessions and clinical workflow.</p>
+            </div>
+            
+            <div class="flex gap-3">
+                <button class="px-6 py-3 bg-surface-container-low text-on-surface-variant font-semibold rounded-xl hover:bg-surface-container-highest transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg" data-icon="calendar_month">calendar_month</span>
+                    Calendar View
+                </button>
+                <button class="px-6 py-3 bg-gradient-to-r from-primary to-primary-container text-white rounded-xl font-semibold shadow-lg shadow-sky-900/10 hover:scale-[1.02] transition-transform flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg" data-icon="add">add</span>
+                    Schedule
+                </button>
+            </div>
+        </div>
+
+        <!-- Master List Container -->
+        <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm shadow-sky-900/5">
+            <!-- Filter Bar -->
+            <div class="px-8 py-6 border-b border-surface-container-low flex justify-between items-center bg-white/50">
+                <div class="flex gap-2">
+                    <button class="px-5 py-2 bg-primary/10 text-primary font-bold text-sm rounded-full">All</button>
+                    <button class="px-5 py-2 text-on-surface-variant hover:bg-surface-container-low font-bold text-sm rounded-full transition-colors">Today</button>
+                    <button class="px-5 py-2 text-tertiary hover:bg-tertiary-container/10 font-bold text-sm rounded-full transition-colors">Pending</button>
+                </div>
+                
+                <div class="relative w-72">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant" data-icon="search" style="font-size: 18px;">search</span>
+                    <input type="text" class="w-full bg-surface-container-low border-none rounded-xl py-2 pl-9 pr-4 text-sm focus:ring-2 focus:ring-sky-500/20 transition-all placeholder:text-outline-variant outline-none" placeholder="Search by patient or ID...">
+                </div>
+            </div>
+            
+            <!-- Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-max">
+                    <thead>
+                        <tr class="bg-surface-container-low/50">
+                            <th class="px-8 py-4 text-xs font-bold text-outline-variant uppercase tracking-widest text-[10px]">Booking ID</th>
+                            <th class="px-8 py-4 text-xs font-bold text-outline-variant uppercase tracking-widest text-[10px]">Patient Name</th>
+                            <th class="px-8 py-4 text-xs font-bold text-outline-variant uppercase tracking-widest text-[10px]">Physician</th>
+                            <th class="px-8 py-4 text-xs font-bold text-outline-variant uppercase tracking-widest text-[10px]">Date & Time</th>
+                            <th class="px-8 py-4 text-xs font-bold text-outline-variant uppercase tracking-widest text-[10px]">Department</th>
+                            <th class="px-8 py-4 text-xs font-bold text-outline-variant uppercase tracking-widest text-[10px]">Status</th>
+                            <th class="px-8 py-4 text-xs font-bold text-outline-variant uppercase tracking-widest text-[10px] text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-surface-container-low">
+                        <!-- Appointment Row 1 -->
+                        <tr class="hover:bg-primary-fixed/20 cursor-pointer transition-colors group">
+                            <td class="px-8 py-5 text-sm font-bold text-outline">#APT-8401</td>
+                            <td class="px-8 py-5">
+                                <div class="font-semibold text-on-surface">Sarah Jenkins</div>
+                                <div class="text-xs text-on-surface-variant font-medium">PT-2041</div>
+                            </td>
+                            <td class="px-8 py-5">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center font-bold text-[10px]">RC</div>
+                                    <span class="text-sm font-medium">Dr. Robert Chen</span>
+                                </div>
+                            </td>
+                            <td class="px-8 py-5">
+                                <div class="text-sm font-medium">Oct 24, 2026</div>
+                                <div class="text-xs text-on-surface-variant">09:30 AM - 10:00 AM</div>
+                            </td>
+                            <td class="px-8 py-5 text-sm">Cardiology</td>
+                            <td class="px-8 py-5">
+                                <span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed text-[11px] font-bold rounded-full">Pending</span>
+                            </td>
+                            <td class="px-8 py-5 text-right flex items-center justify-end gap-2">
+                                <button class="w-8 h-8 rounded border border-emerald-200 text-emerald-600 bg-emerald-50 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition-colors" title="Approve">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">check</span>
+                                </button>
+                                <button class="w-8 h-8 rounded border border-rose-200 text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white flex items-center justify-center transition-colors" title="Cancel">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+                                </button>
+                            </td>
+                        </tr>
+                        
+                        <!-- Appointment Row 2 -->
+                        <tr class="hover:bg-primary-fixed/20 cursor-pointer transition-colors group">
+                            <td class="px-8 py-5 text-sm font-bold text-outline">#APT-8395</td>
+                            <td class="px-8 py-5">
+                                <div class="font-semibold text-on-surface">Michael Smith</div>
+                                <div class="text-xs text-on-surface-variant font-medium">PT-1833</div>
+                            </td>
+                            <td class="px-8 py-5">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-secondary-fixed text-on-secondary-container flex items-center justify-center font-bold text-[10px]">ES</div>
+                                    <span class="text-sm font-medium">Dr. Emily Stone</span>
+                                </div>
+                            </td>
+                            <td class="px-8 py-5">
+                                <div class="text-sm font-medium">Oct 24, 2026</div>
+                                <div class="text-xs text-on-surface-variant">10:15 AM - 11:00 AM</div>
+                            </td>
+                            <td class="px-8 py-5 text-sm">Neurology</td>
+                            <td class="px-8 py-5">
+                                <span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[11px] font-bold rounded-full">Approved</span>
+                            </td>
+                            <td class="px-8 py-5 text-right">
+                                <button class="w-8 h-8 rounded bg-surface-container-high text-on-surface flex items-center justify-center hover:bg-surface-container-highest transition-colors ml-auto">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">more_horiz</span>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="px-8 py-4 bg-surface-container-low/30 border-t border-surface-container-low flex justify-between items-center text-sm text-on-surface-variant font-medium">
+                <span>Showing 1 to 2 of 2 entries</span>
+                <div class="flex gap-1">
+                    <button class="w-8 h-8 rounded flex items-center justify-center border border-outline-variant/30 text-outline-variant disabled cursor-not-allowed">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">chevron_left</span>
+                    </button>
+                    <button class="w-8 h-8 rounded flex items-center justify-center bg-primary text-white font-bold">1</button>
+                    <button class="w-8 h-8 rounded flex items-center justify-center border border-outline-variant/30 text-outline-variant disabled cursor-not-allowed">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+</body>
+</html>
