@@ -3,7 +3,6 @@ package com.capgemini.hms.reporting.controller;
 import com.capgemini.hms.reporting.dto.DashboardSummaryDTO;
 import com.capgemini.hms.reporting.dto.DepartmentStatsDTO;
 import com.capgemini.hms.reporting.service.ReportingService;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,14 +26,12 @@ public class DashboardController {
     }
 
     @GetMapping("/summary")
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get dashboard summary", description = "Returns a high-level overview of hospital resources (Patients, Physicians, Occupancy, Revenue)")
     public ResponseEntity<ApiResponse<DashboardSummaryDTO>> getDashboardSummary() {
         return ResponseEntity.ok(ApiResponse.success(reportingService.getSummary()));
     }
 
     @GetMapping("/departments")
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get department statistics", description = "Returns detailed statistics for each hospital department")
     public ResponseEntity<ApiResponse<List<DepartmentStatsDTO>>> getDepartmentStats() {
         return ResponseEntity.ok(ApiResponse.success(reportingService.getDepartmentStats()));
