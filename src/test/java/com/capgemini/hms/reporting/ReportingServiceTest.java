@@ -80,3 +80,5 @@ class ReportingServiceTest {
         assertEquals(8L, result.get(0).getPhysicianCount());
     }
 }
+
+// Telemetry: Verify test execution coverage
