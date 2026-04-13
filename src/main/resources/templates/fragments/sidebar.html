@@ -1,0 +1,45 @@
+<!-- src/main/resources/templates/fragments/sidebar.html -->
+<aside th:fragment="sidebar" class="fixed left-0 top-0 h-full flex flex-col bg-slate-50 dark:bg-slate-900 w-64 border-r-0 z-50">
+    <div class="p-8">
+        <h1 class="text-xl font-bold tracking-tight text-sky-900 dark:text-sky-100">Clinical Precision</h1>
+        <p class="text-xs text-slate-500 font-medium mt-1">The Ethereal Clinic</p>
+    </div>
+    <nav class="flex-1 px-4 space-y-2">
+        <!-- Active Tab: Dashboard -->
+        <a th:classappend="${#httpServletRequest.requestURI == '/' ? 'text-sky-700 dark:text-sky-400 font-bold border-r-4 border-sky-600 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 font-medium hover:bg-sky-50 dark:hover:bg-sky-900/30'}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors" href="/">
+            <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+            <span class="text-sm">Dashboard</span>
+        </a>
+        <a th:classappend="${#httpServletRequest.requestURI == '/patient' ? 'text-sky-700 dark:text-sky-400 font-bold border-r-4 border-sky-600 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 font-medium hover:bg-sky-50 dark:hover:bg-sky-900/30'}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors" href="/patient">
+            <span class="material-symbols-outlined" data-icon="group">group</span>
+            <span class="text-sm">Patients</span>
+        </a>
+        <a th:classappend="${#httpServletRequest.requestURI == '/physician' ? 'text-sky-700 dark:text-sky-400 font-bold border-r-4 border-sky-600 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 font-medium hover:bg-sky-50 dark:hover:bg-sky-900/30'}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors" href="/physician">
+            <span class="material-symbols-outlined" data-icon="medical_services">medical_services</span>
+            <span class="text-sm">Physicians</span>
+        </a>
+        <a th:classappend="${#httpServletRequest.requestURI == '/appointment' ? 'text-sky-700 dark:text-sky-400 font-bold border-r-4 border-sky-600 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 font-medium hover:bg-sky-50 dark:hover:bg-sky-900/30'}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors" href="/appointment">
+            <span class="material-symbols-outlined" data-icon="event">event</span>
+            <span class="text-sm">Appointments</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-slate-500 dark:text-slate-400 font-medium hover:bg-sky-50 dark:hover:bg-sky-900/30" href="#">
+            <span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+            <span class="text-sm">Departments</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-slate-500 dark:text-slate-400 font-medium hover:bg-sky-50 dark:hover:bg-sky-900/30" href="#">
+            <span class="material-symbols-outlined" data-icon="settings">settings</span>
+            <span class="text-sm">Settings</span>
+        </a>
+    </nav>
+    <div class="p-6 mt-auto">
+        <div class="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" onclick="logout()">
+            <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-content-center text-center font-bold items-center justify-center">
+                JV
+            </div>
+            <div class="overflow-hidden">
+                <p class="text-sm font-bold text-on-surface truncate">Dr. Julian Vane</p>
+                <p class="text-xs text-on-surface-variant truncate">Logout</p>
+            </div>
+        </div>
+    </div>
+</aside>
