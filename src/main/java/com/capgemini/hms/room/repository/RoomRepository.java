@@ -18,6 +18,15 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
     @Query("SELECT r FROM Room r WHERE r.isDeleted = false AND r.roomType = :roomType")
     List<Room> findByRoomTypeActive(@Param("roomType") String roomType);
 
+    @Query("SELECT r FROM Room r WHERE r.isDeleted = false AND r.unavailable = :unavailable")
+    List<Room> findByUnavailableActive(@Param("unavailable") Boolean unavailable);
+
+    @Query("SELECT r FROM Room r WHERE r.isDeleted = false AND r.unavailable = false AND r.roomType = :roomType")
+    List<Room> findAvailableByRoomTypeActive(@Param("roomType") String roomType);
+
+    @Query("SELECT r FROM Room r WHERE r.isDeleted = false AND r.unavailable = true AND r.roomType = :roomType")
+    List<Room> findUnavailableByRoomTypeActive(@Param("roomType") String roomType);
+
     @Query("SELECT r FROM Room r WHERE r.isDeleted = false AND r.unavailable = false")
     List<Room> findAvailableRooms();
 
