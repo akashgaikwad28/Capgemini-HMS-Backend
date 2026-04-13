@@ -5,7 +5,7 @@ import com.capgemini.hms.procedure.entity.TrainedIn;
 import com.capgemini.hms.procedure.service.CertificationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.capgemini.hms.common.dto.ApiResponse;
 
@@ -26,7 +26,6 @@ public class CertificationController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Record certification", description = "Certifies a physician to perform a specific medical procedure")
     public ResponseEntity<ApiResponse<String>> certifyPhysician(@Valid @RequestBody CertificationRequest request) {
         certificationService.certifyPhysician(request);
@@ -34,7 +33,6 @@ public class CertificationController {
     }
 
     @GetMapping("/physician/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE')")
     @Operation(summary = "Get physician skills", description = "Returns a list of all procedures a specific physician is certified to perform")
     public ResponseEntity<ApiResponse<List<TrainedIn>>> getPhysicianSkills(@PathVariable Integer id) {
         return ResponseEntity.ok(ApiResponse.success(certificationService.getPhysicianCertifications(id)));
