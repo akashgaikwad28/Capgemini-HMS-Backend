@@ -1,26 +1,25 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)" class="light">
+<script src="https://cdn.tailwindcss.com"></script>
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title th:replace="${title}">Clinical Precision | HMS Dashboard</title>
-    
+    <title th:replace="${title}">Clinical Precision | HMS</title>
+
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet"/>
     <!-- Material Symbols -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-    
-    <!-- Tailwind CSS CDN -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script id="tailwind-config">
-          tailwind.config = {
+        tailwind.config = {
             darkMode: "class",
             theme: {
-              extend: {
-                "colors": {
+                extend: {
+                    colors: {
                         "secondary-fixed-dim": "#abcae8",
                         "secondary-container": "#c1e0ff",
                         "on-secondary": "#ffffff",
@@ -68,58 +67,96 @@
                         "surface-container": "#edeeef",
                         "primary-fixed-dim": "#92ccff",
                         "on-tertiary": "#ffffff"
-                },
-                "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
-                },
-                "fontFamily": {
-                        "headline": ["Manrope"],
-                        "body": ["Inter"],
-                        "label": ["Inter"]
+                    },
+                    borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+                    fontFamily: { headline: ["Manrope"], body: ["Inter"], label: ["Inter"] }
                 }
-              },
-            },
-          }
+            }
+        }
     </script>
     <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            vertical-align: middle;
-        }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
         body { font-family: 'Inter', sans-serif; }
-        h1, h2, h3, .display-lg, .font-headline { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
-        }
-        .skeleton-shimmer {
-            background: linear-gradient(90deg, #f3f4f5 25%, #e7e8e9 50%, #f3f4f5 75%);
-            background-size: 200% 100%;
-        }
+        #toast { transition: opacity 0.4s ease, transform 0.4s ease; }
     </style>
 </head>
-<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<body class="bg-surface text-on-surface font-body">
 
-    <!-- SideNavBar Shell -->
+    <!-- Sidebar -->
     <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
 
-    <!-- Main Content Area -->
+    <!-- Main Content -->
     <main class="ml-64 min-h-screen">
-        <!-- TopNavBar Shell -->
         <header th:replace="~{fragments/header :: header}"></header>
-
-        <!-- Dynamic Page Content -->
-        <div th:replace="${content}">
-            <!-- Page content will be injected here -->
-        </div>
+        <div th:replace="${content}"></div>
     </main>
 
-    <!-- Custom App JS -->
-    <script th:src="@{/js/main.js}"></script>
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-[200] opacity-0 translate-y-4 pointer-events-none">
+        <div id="toast-inner" class="flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl text-white text-sm font-semibold bg-on-surface">
+            <span class="material-symbols-outlined text-base" id="toast-icon">check_circle</span>
+            <span id="toast-msg">Done</span>
+        </div>
+    </div>
+
+    <script>
+        // ─── Auth helpers ───────────────────────────────────────────────
+        function getToken() { return localStorage.getItem('hms_token'); }
+        function getUser()  { try { return JSON.parse(localStorage.getItem('hms_user') || '{}'); } catch { return {}; } }
+        function hasRole(r) { return (getUser().roles || []).includes('ROLE_' + r.toUpperCase()); }
+
+        function authHeaders() {
+            return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() };
+        }
+
+        async function apiFetch(url, opts = {}) {
+            opts.headers = { ...authHeaders(), ...(opts.headers || {}) };
+            const res = await fetch(url, opts);
+            if (res.status === 401) { logout(); return null; }
+            return res;
+        }
+
+        function logout() {
+            localStorage.removeItem('hms_token');
+            localStorage.removeItem('hms_refresh');
+            localStorage.removeItem('hms_user');
+            window.location.href = '/login';
+        }
+
+        // ─── Toast ───────────────────────────────────────────────────────
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            const inner = document.getElementById('toast-inner');
+            const icon = document.getElementById('toast-icon');
+            document.getElementById('toast-msg').textContent = msg;
+            inner.className = 'flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl text-white text-sm font-semibold ' +
+                (type === 'error' ? 'bg-error' : type === 'warn' ? 'bg-tertiary' : 'bg-on-surface');
+            icon.textContent = type === 'error' ? 'error' : type === 'warn' ? 'warning' : 'check_circle';
+            t.classList.remove('opacity-0','translate-y-4','pointer-events-none');
+            t.classList.add('opacity-100','translate-y-0');
+            setTimeout(() => { t.classList.remove('opacity-100','translate-y-0'); t.classList.add('opacity-0','translate-y-4','pointer-events-none'); }, 3500);
+        }
+
+        // ─── Confirm dialog ─────────────────────────────────────────────
+        function confirmAction(msg, fn) {
+            if (confirm(msg)) fn();
+        }
+
+        // ─── Protect pages that need auth ────────────────────────────────
+        (function() {
+            const pub = ['/login'];
+            if (!pub.includes(window.location.pathname) && !getToken()) {
+                window.location.href = '/login';
+            }
+            // Update sidebar user block
+            const u = getUser();
+            const nameEl = document.getElementById('sidebar-username');
+            const roleEl = document.getElementById('sidebar-role');
+            if (nameEl && u.username) nameEl.textContent = u.username;
+            if (roleEl && u.roles) roleEl.textContent = (u.roles[0] || '').replace('ROLE_','');
+        })();
+    </script>
 </body>
 </html>
-<!-- Frontend rendering pipeline verified -->
