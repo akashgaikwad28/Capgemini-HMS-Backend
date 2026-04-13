@@ -97,7 +97,7 @@ public class DepartmentController {
         departmentService.affiliatePhysician(
                 request.getPhysicianId(), 
                 request.getDepartmentId(), 
-                request.getPrimaryAffiliation());
+                request.getPrimary());
         return ResponseEntity.ok(ApiResponse.success("Physician affiliated successfully"));
     }
 
