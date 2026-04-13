@@ -32,7 +32,6 @@ public class PrescriptionController {
     }
 
     @GetMapping("/my")
-    @PreAuthorize("hasRole('PATIENT')")
     @Operation(summary = "Get my prescriptions", description = "Returns all medications prescribed to the current logged-in patient")
     public ResponseEntity<ApiResponse<List<Prescription>>> getMyPrescriptions() {
         Integer ssn = getAuthenticatedPatientSsn();
@@ -41,7 +40,6 @@ public class PrescriptionController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     @Operation(summary = "Create a prescription", description = "Records a new medication order prescribed by a physician for a patient")
     public ResponseEntity<ApiResponse<String>> createPrescription(@Valid @RequestBody PrescriptionRequest request) {
         // Build Prescription objects from Request IDs
@@ -74,7 +72,6 @@ public class PrescriptionController {
     }
 
     @GetMapping("/patient/{ssn}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE') or (hasRole('PATIENT') and #ssn == principal.patientSsn)")
     @Operation(summary = "Get patient prescriptions", description = "Returns all medications prescribed to a specific patient")
     public ResponseEntity<ApiResponse<List<Prescription>>> getPatientPrescriptions(@PathVariable Integer ssn) {
         return ResponseEntity.ok(ApiResponse.success(prescriptionService.getPatientPrescriptions(ssn)));
