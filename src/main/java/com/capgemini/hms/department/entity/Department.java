@@ -7,19 +7,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Table(name = "department")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Department {
 
     @Id
@@ -32,4 +22,48 @@ public class Department {
     @ManyToOne
     @JoinColumn(name = "head", referencedColumnName = "employeeid")
     private Physician head;
+
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
+
+    public Department() {
+    }
+
+    public Department(Integer departmentId, String name, Physician head) {
+        this.departmentId = departmentId;
+        this.name = name;
+        this.head = head;
+    }
+
+    public Integer getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Integer departmentId) {
+        this.departmentId = departmentId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Physician getHead() {
+        return head;
+    }
+
+    public void setHead(Physician head) {
+        this.head = head;
+    }
+
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
 }
