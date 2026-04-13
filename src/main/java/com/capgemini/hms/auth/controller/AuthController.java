@@ -10,12 +10,17 @@ import com.capgemini.hms.auth.payload.response.JwtResponse;
 import com.capgemini.hms.auth.payload.response.MessageResponse;
 import com.capgemini.hms.auth.repository.RoleRepository;
 import com.capgemini.hms.auth.repository.UserRepository;
-import com.capgemini.hms.patient.repository.PatientRepository;
 import com.capgemini.hms.common.dto.ApiResponse;
+import com.capgemini.hms.nurse.repository.NurseRepository;
+import com.capgemini.hms.patient.repository.PatientRepository;
+import com.capgemini.hms.physician.repository.PhysicianRepository;
 import com.capgemini.hms.security.jwt.JwtUtils;
 import com.capgemini.hms.security.services.UserDetailsImpl;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,9 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -47,10 +49,16 @@ public class AuthController {
     RoleRepository roleRepository;
 
     @Autowired
-    PasswordEncoder encoder;
+    PhysicianRepository physicianRepository;
+
+    @Autowired
+    NurseRepository nurseRepository;
 
     @Autowired
     PatientRepository patientRepository;
+
+    @Autowired
+    PasswordEncoder encoder;
 
     @Autowired
     JwtUtils jwtUtils;
@@ -128,10 +136,17 @@ public class AuthController {
             Role userRole = roleRepository.findByName(ERole.ROLE_USER)
                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
             roles.add(userRole);
-        } else {
-            strRoles.forEach(role -> {
-                switch (role) {
+        } else if (strRoles != null) {
+            for (String role : strRoles) {
+                switch (role.toLowerCase()) {
                     case "admin":
+                        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                        if (auth == null || auth.getAuthorities().stream()
+                                .noneMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                            return ResponseEntity
+                                    .status(HttpStatus.FORBIDDEN)
+                                    .body(new MessageResponse("Error: Only an authenticated Admin can register another Admin."));
+                        }
                         Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
                                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                         roles.add(adminRole);
@@ -140,11 +155,27 @@ public class AuthController {
                         Role doctorRole = roleRepository.findByName(ERole.ROLE_DOCTOR)
                                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                         roles.add(doctorRole);
+                        
+                        if (signUpRequest.getStaffId() == null) {
+                            throw new RuntimeException("Error: Staff ID is required for doctor role.");
+                        }
+                        if (!physicianRepository.existsById(signUpRequest.getStaffId())) {
+                            throw new RuntimeException("Error: Provided Staff ID is not registered as a Physician.");
+                        }
+                        user.setStaffId(signUpRequest.getStaffId());
                         break;
                     case "nurse":
                         Role nurseRole = roleRepository.findByName(ERole.ROLE_NURSE)
                                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                         roles.add(nurseRole);
+                        
+                        if (signUpRequest.getStaffId() == null) {
+                            throw new RuntimeException("Error: Staff ID is required for nurse role.");
+                        }
+                        if (!nurseRepository.existsById(signUpRequest.getStaffId())) {
+                            throw new RuntimeException("Error: Provided Staff ID is not registered as a Nurse.");
+                        }
+                        user.setStaffId(signUpRequest.getStaffId());
                         break;
                     case "patient":
                         Role patientRole = roleRepository.findByName(ERole.ROLE_PATIENT)
@@ -165,7 +196,7 @@ public class AuthController {
                                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                         roles.add(userRole);
                 }
-            });
+            }
         }
 
         user.setRoles(roles);
