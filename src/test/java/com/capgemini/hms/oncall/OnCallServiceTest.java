@@ -119,3 +119,5 @@ class OnCallServiceTest {
         assertEquals(1, captor.getValue().getBlockCode());
     }
 }
+
+// Telemetry: Verify test execution coverage
