@@ -154,4 +154,5 @@ class StaffServiceTest {
         assertEquals(1, result.size());
         assertTrue(result.get(0).getRegistered());
     }
+    // Added for evaluation commit tracking
 }
