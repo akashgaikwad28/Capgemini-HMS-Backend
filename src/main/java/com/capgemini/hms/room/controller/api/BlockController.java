@@ -1,4 +1,4 @@
-package com.capgemini.hms.room.controller;
+package com.capgemini.hms.room.controller.api;
 
 import com.capgemini.hms.common.dto.ApiResponse;
 import com.capgemini.hms.room.dto.BlockDTO;
