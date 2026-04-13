@@ -59,19 +59,23 @@ public class AppointmentService {
     }
 
     @Transactional
-    public Appointment updateAppointment(Appointment appointment) {
-        Appointment existing = appointmentRepository.findById(appointment.getAppointmentId())
+    public Appointment updateAppointment(Appointment partial) {
+        Appointment existing = appointmentRepository.findById(partial.getAppointmentId())
                 .filter(a -> !a.getIsDeleted())
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
         
-        validateAppointment(appointment);
-        
-        existing.setStart(appointment.getStart());
-        existing.setEnd(appointment.getEnd());
-        existing.setExaminationRoom(appointment.getExaminationRoom());
-        existing.setPhysician(appointment.getPhysician());
-        existing.setPrepNurse(appointment.getPrepNurse());
-        existing.setPatient(appointment.getPatient());
+        // Merge only non-null fields
+        if (partial.getPatient() != null) existing.setPatient(partial.getPatient());
+        if (partial.getPhysician() != null) existing.setPhysician(partial.getPhysician());
+        if (partial.getPrepNurse() != null) existing.setPrepNurse(partial.getPrepNurse());
+        if (partial.getStart() != null) existing.setStart(partial.getStart());
+        if (partial.getEnd() != null) existing.setEnd(partial.getEnd());
+        if (partial.getExaminationRoom() != null && !partial.getExaminationRoom().isBlank()) {
+            existing.setExaminationRoom(partial.getExaminationRoom());
+        }
+
+        // Validate the FINAL resultant object
+        validateAppointment(existing);
         
         return appointmentRepository.save(existing);
     }
