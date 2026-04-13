@@ -22,16 +22,18 @@ public class UserDetailsImpl implements UserDetails {
     private String password;
 
     private Integer patientSsn;
+    private Integer staffId;
 
     private Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(Long id, String username, String email, String password, Integer patientSsn,
+    public UserDetailsImpl(Long id, String username, String email, String password, Integer patientSsn, Integer staffId,
                            Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.password = password;
         this.patientSsn = patientSsn;
+        this.staffId = staffId;
         this.authorities = authorities;
     }
 
@@ -46,6 +48,7 @@ public class UserDetailsImpl implements UserDetails {
                 user.getEmail(),
                 user.getPassword(),
                 user.getPatientSsn(),
+                user.getStaffId(),
                 authorities);
     }
 
@@ -64,6 +67,10 @@ public class UserDetailsImpl implements UserDetails {
 
     public Integer getPatientSsn() {
         return patientSsn;
+    }
+
+    public Integer getStaffId() {
+        return staffId;
     }
 
     @Override
