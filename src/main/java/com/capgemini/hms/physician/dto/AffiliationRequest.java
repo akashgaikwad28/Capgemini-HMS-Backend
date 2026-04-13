@@ -14,14 +14,14 @@ public class AffiliationRequest {
 
     @NotNull
     @Schema(example = "true", description = "Whether this is the physician's primary department")
-    private Boolean primaryAffiliation;
+    private Boolean primary;
 
     public AffiliationRequest() {}
 
-    public AffiliationRequest(Integer physicianId, Integer departmentId, Boolean primaryAffiliation) {
+    public AffiliationRequest(Integer physicianId, Integer departmentId, Boolean primary) {
         this.physicianId = physicianId;
         this.departmentId = departmentId;
-        this.primaryAffiliation = primaryAffiliation;
+        this.primary = primary;
     }
 
     public Integer getPhysicianId() { return physicianId; }
@@ -30,6 +30,6 @@ public class AffiliationRequest {
     public Integer getDepartmentId() { return departmentId; }
     public void setDepartmentId(Integer departmentId) { this.departmentId = departmentId; }
 
-    public Boolean getPrimaryAffiliation() { return primaryAffiliation; }
-    public void setPrimaryAffiliation(Boolean primaryAffiliation) { this.primaryAffiliation = primaryAffiliation; }
+    public Boolean getPrimary() { return primary; }
+    public void setPrimary(Boolean primary) { this.primary = primary; }
 }
