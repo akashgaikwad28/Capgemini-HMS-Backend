@@ -5,7 +5,7 @@ import com.capgemini.hms.procedure.entity.Undergoes;
 import com.capgemini.hms.procedure.service.MedicalRecordService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,7 +28,6 @@ public class MedicalRecordController {
     }
 
     @GetMapping("/my")
-    @PreAuthorize("hasRole('PATIENT')")
     @Operation(summary = "Get my medical history", description = "Returns a chronological list of all procedures undergone by the current logged-in patient")
     public ResponseEntity<ApiResponse<List<Undergoes>>> getMyHistory() {
         Integer ssn = getAuthenticatedPatientSsn();
@@ -37,7 +36,6 @@ public class MedicalRecordController {
     }
 
     @PostMapping("/procedure")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     @Operation(summary = "Record a procedure", description = "Documents a procedure performed on a patient during a specific stay")
     public ResponseEntity<ApiResponse<String>> recordProcedure(@Valid @RequestBody UndergoesRequest request) {
         medicalRecordService.recordProcedure(
@@ -53,14 +51,12 @@ public class MedicalRecordController {
     }
 
     @GetMapping("/patient/{ssn}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE') or (hasRole('PATIENT') and #ssn == principal.patientSsn)")
     @Operation(summary = "Get patient medical history", description = "Returns a chronological list of all procedures undergone by a patient")
     public ResponseEntity<ApiResponse<List<Undergoes>>> getPatientHistory(@PathVariable Integer ssn) {
         return ResponseEntity.ok(ApiResponse.success(medicalRecordService.getPatientMedicalHistory(ssn)));
     }
 
     @GetMapping("/stay/{stayId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE')")
     @Operation(summary = "Get stay procedures", description = "Returns all procedures performed during a specific patient admission")
     public ResponseEntity<ApiResponse<List<Undergoes>>> getStayProcedures(@PathVariable Integer stayId) {
         return ResponseEntity.ok(ApiResponse.success(medicalRecordService.getStayProcedures(stayId)));
