@@ -1,4 +1,4 @@
-package com.capgemini.hms.patient.controller;
+package com.capgemini.hms.patient.controller.api;
 
 import com.capgemini.hms.patient.dto.PatientDTO;
 import com.capgemini.hms.patient.entity.Patient;
