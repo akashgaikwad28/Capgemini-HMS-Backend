@@ -156,3 +156,5 @@ class StaffServiceTest {
     }
     // Added for evaluation commit tracking
 }
+
+// Telemetry: Verify test execution coverage
