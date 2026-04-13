@@ -11,19 +11,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Table(name = "undergoes")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Undergoes {
 
     @EmbeddedId
@@ -51,4 +41,77 @@ public class Undergoes {
     @ManyToOne
     @JoinColumn(name = "assistingnurse", referencedColumnName = "employeeid")
     private Nurse assistingNurse;
+
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
+
+    public Undergoes() {
+    }
+
+    public Undergoes(UndergoesId id, Patient patient, Procedure procedure, Stay stay, 
+                     Physician physician, Nurse assistingNurse, String notes) {
+        this.id = id;
+        this.patient = patient;
+        this.procedure = procedure;
+        this.stay = stay;
+        this.physician = physician;
+        this.assistingNurse = assistingNurse;
+        this.notes = notes;
+    }
+
+    public UndergoesId getId() {
+        return id;
+    }
+
+    public void setId(UndergoesId id) {
+        this.id = id;
+    }
+
+    public Patient getPatient() {
+        return patient;
+    }
+
+    public void setPatient(Patient patient) {
+        this.patient = patient;
+    }
+
+    public Procedure getProcedure() {
+        return procedure;
+    }
+
+    public void setProcedure(Procedure procedure) {
+        this.procedure = procedure;
+    }
+
+    public Stay getStay() {
+        return stay;
+    }
+
+    public void setStay(Stay stay) {
+        this.stay = stay;
+    }
+
+    public Physician getPhysician() {
+        return physician;
+    }
+
+    public void setPhysician(Physician physician) {
+        this.physician = physician;
+    }
+
+    public Nurse getAssistingNurse() {
+        return assistingNurse;
+    }
+
+    public void setAssistingNurse(Nurse assistingNurse) {
+        this.assistingNurse = assistingNurse;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
 }
