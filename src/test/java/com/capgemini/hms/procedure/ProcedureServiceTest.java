@@ -96,3 +96,5 @@ class ProcedureServiceTest {
         assertTrue(captor.getValue().getIsDeleted());
     }
 }
+
+// Telemetry: Verify test execution coverage
