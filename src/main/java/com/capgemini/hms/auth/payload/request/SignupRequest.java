@@ -29,6 +29,9 @@ public class SignupRequest {
     @Schema(example = "1001", description = "SSN of the patient (Required if role is 'patient')")
     private Integer patientSsn;
 
+    @Schema(example = "201", description = "Employee ID of the doctor/nurse (Required for staff roles)")
+    private Integer staffId;
+
     public String getUsername() {
         return username;
     }
@@ -67,5 +70,13 @@ public class SignupRequest {
 
     public void setPatientSsn(Integer patientSsn) {
         this.patientSsn = patientSsn;
+    }
+
+    public Integer getStaffId() {
+        return staffId;
+    }
+
+    public void setStaffId(Integer staffId) {
+        this.staffId = staffId;
     }
 }
