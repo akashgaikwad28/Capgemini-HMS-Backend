@@ -50,10 +50,7 @@
         <!-- Pagination -->
         <div class="px-6 py-4 flex justify-between items-center border-t border-surface-container-low text-sm text-on-surface-variant">
             <span id="page-info">—</span>
-            <div class="flex gap-2">
-                <button id="prev-btn" onclick="changePage(-1)" class="px-3 py-1.5 bg-surface-container rounded-lg hover:bg-surface-container-high transition-colors disabled:opacity-40">← Prev</button>
-                <button id="next-btn" onclick="changePage(1)"  class="px-3 py-1.5 bg-surface-container rounded-lg hover:bg-surface-container-high transition-colors disabled:opacity-40">Next →</button>
-            </div>
+            <div id="pager"></div>
         </div>
     </div>
 
@@ -96,8 +93,10 @@
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs font-semibold text-outline uppercase tracking-wider">PCP (Physician) ID</label>
-                    <input id="f-pcp" type="number" placeholder="101 (optional)" class="field-input mt-1"/>
+                    <label class="text-xs font-semibold text-outline uppercase tracking-wider">Primary Care Physician (PCP)</label>
+                    <select id="f-pcp" class="field-input mt-1">
+                        <option value="">— Select Physician —</option>
+                    </select>
                 </div>
                 <div id="modal-err" class="hidden text-error text-sm bg-error-container rounded-lg px-3 py-2"></div>
                 <div class="flex gap-3 pt-2">
@@ -107,161 +106,168 @@
             </div>
         </div>
     </div>
-</section>
 
-<style>
-.field-input { display:block; width:100%; padding:0.6rem 0.875rem; background:#f3f4f5; border:none; border-radius:0.75rem; font-size:0.875rem; outline:none; transition:all 0.15s; }
-.field-input:focus { background:#fff; box-shadow:0 0 0 2px rgba(0,99,151,0.15); }
-</style>
+    <style>
+    .field-input { display:block; width:100%; padding:0.6rem 0.875rem; background:#f3f4f5; border:none; border-radius:0.75rem; font-size:0.875rem; outline:none; transition:all 0.15s; }
+    .field-input:focus { background:#fff; box-shadow:0 0 0 2px rgba(0,99,151,0.15); }
+    </style>
 
-<script>
-let currentPage = 0;
-let totalPages = 0;
-let editMode = false;
+    <script>
+    let currentPage = 0;
+    let currentList = [];
+    let editMode = false;
 
-async function loadPatients(page) {
-    currentPage = page;
-    editMode = false;
-    const tbody = document.getElementById('patient-tbody');
-    tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>';
-    try {
-        const res = await apiFetch(`/api/v1/patients?page=${page}&size=10&sort=ssn,asc`);
-        if (!res || !res.ok) { tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-error text-sm">Failed to load patients.</td></tr>'; return; }
-        const body = await res.json();
-        const data = body.data; // PagedResponse
-        totalPages = data.totalPages;
-        document.getElementById('page-info').textContent = `Page ${data.pageNo + 1} of ${data.totalPages} (${data.totalElements} records)`;
-        document.getElementById('prev-btn').disabled = data.pageNo === 0;
-        document.getElementById('next-btn').disabled = data.last;
-        if (!data.content || data.content.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">No patients found.</td></tr>'; return;
+    async function loadPatients(page) {
+        currentPage = page;
+        const tbody = document.getElementById('patient-tbody');
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>';
+        
+        try {
+            const res = await apiFetch('/api/v1/patients?page=' + page + '&size=10&sort=ssn,asc');
+            if (!res || !res.data) return;
+            
+            const data = res.data;
+            currentList = data.content || [];
+            
+            document.getElementById('page-info').textContent = 'Page ' + (data.pageNo + 1) + ' of ' + data.totalPages + ' (' + data.totalElements + ' records)';
+            buildPaginationControls('pager', data.totalPages, data.pageNo, 'loadPatients');
+            
+            if (currentList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">No patients found.</td></tr>'; 
+            } else {
+                tbody.innerHTML = currentList.map(p =>
+                    '<tr class="hover:bg-primary-fixed/20 transition-colors">' +
+                        '<td class="px-6 py-4 text-sm font-medium text-primary">' + p.ssn + '</td>' +
+                        '<td class="px-6 py-4">' +
+                            '<div class="flex items-center gap-2">' +
+                                '<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">' + (p.name || '??').split(' ').map(n=>n[0]).join('').toUpperCase() + '</div>' +
+                                '<span class="font-semibold text-on-surface text-sm">' + p.name + '</span>' +
+                            '</div>' +
+                        '</td>' +
+                        '<td class="px-6 py-4 text-sm text-on-surface-variant">' + p.phone + '</td>' +
+                        '<td class="px-6 py-4 text-sm text-on-surface-variant">' + p.insuranceId + '</td>' +
+                        '<td class="px-6 py-4 text-sm text-on-surface-variant">' + (p.pcpId || '—') + '</td>' +
+                        '<td class="px-6 py-4 text-sm text-on-surface-variant max-w-[180px] truncate" title="' + (p.address || '').replace(/"/g, '&quot;') + '">' + p.address + '</td>' +
+                        '<td class="px-6 py-4">' +
+                            '<div class="flex gap-2">' +
+                                '<button onclick="openEditById(' + p.ssn + ')" class="p-1.5 hover:bg-primary-fixed/30 rounded-lg transition-colors text-primary" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button>' +
+                                '<button onclick="deletePatient(' + p.ssn + ')" class="p-1.5 hover:bg-error-container rounded-lg transition-colors text-error" title="Delete"><span class="material-symbols-outlined text-lg">delete</span></button>' +
+                            '</div>' +
+                        '</td>' +
+                    '</tr>').join('');
+            }
+            applyRoleVisibility();
+        } catch(e) { 
+            console.error(e);
+            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-error text-sm">Failed to load patients: ' + e.message + '</td></tr>'; 
         }
-        tbody.innerHTML = data.content.map(p => `
-            <tr class="hover:bg-primary-fixed/20 transition-colors">
-                <td class="px-6 py-4 text-sm font-medium text-primary">${p.ssn}</td>
-                <td class="px-6 py-4">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">${initials(p.name)}</div>
-                        <span class="font-semibold text-on-surface text-sm">${p.name}</span>
-                    </div>
-                </td>
-                <td class="px-6 py-4 text-sm text-on-surface-variant">${p.phone}</td>
-                <td class="px-6 py-4 text-sm text-on-surface-variant">${p.insuranceId}</td>
-                <td class="px-6 py-4 text-sm text-on-surface-variant">${p.pcpId ?? '—'}</td>
-                <td class="px-6 py-4 text-sm text-on-surface-variant max-w-[180px] truncate" title="${p.address}">${p.address}</td>
-                <td class="px-6 py-4">
-                    <div class="flex gap-2">
-                        <button onclick='openEdit(${JSON.stringify(p)})' class="p-1.5 hover:bg-primary-fixed/30 rounded-lg transition-colors text-primary" title="Edit">
-                            <span class="material-symbols-outlined text-lg">edit</span>
-                        </button>
-                        <button onclick="deletePatient(${p.ssn})" class="p-1.5 hover:bg-error-container rounded-lg transition-colors text-error" title="Delete">
-                            <span class="material-symbols-outlined text-lg">delete</span>
-                        </button>
-                    </div>
-                </td>
-            </tr>`).join('');
-    } catch(e) { tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-error text-sm">${e.message}</td></tr>`; }
-}
-
-async function doSearch() {
-    const q = document.getElementById('search-input').value.trim();
-    if (!q) { loadPatients(0); return; }
-    const tbody = document.getElementById('patient-tbody');
-    tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">Searching…</td></tr>';
-    try {
-        const res = await apiFetch(`/api/v1/patients/search?query=${encodeURIComponent(q)}&page=0&size=20`);
-        if (!res || !res.ok) return;
-        const data = (await res.json()).data;
-        document.getElementById('page-info').textContent = `${data.totalElements} result(s) found`;
-        if (!data.content.length) { tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">No matches.</td></tr>'; return; }
-        tbody.innerHTML = data.content.map(p => `
-            <tr class="hover:bg-primary-fixed/20 transition-colors">
-                <td class="px-6 py-4 text-sm font-medium text-primary">${p.ssn}</td>
-                <td class="px-6 py-4 font-semibold text-on-surface text-sm">${p.name}</td>
-                <td class="px-6 py-4 text-sm text-on-surface-variant">${p.phone}</td>
-                <td class="px-6 py-4 text-sm text-on-surface-variant">${p.insuranceId}</td>
-                <td class="px-6 py-4 text-sm text-on-surface-variant">${p.pcpId ?? '—'}</td>
-                <td class="px-6 py-4 text-sm text-on-surface-variant">${p.address}</td>
-                <td class="px-6 py-4">
-                    <button onclick='openEdit(${JSON.stringify(p)})' class="p-1.5 hover:bg-primary-fixed/30 rounded-lg transition-colors text-primary"><span class="material-symbols-outlined text-lg">edit</span></button>
-                    <button onclick="deletePatient(${p.ssn})" class="p-1.5 hover:bg-error-container rounded-lg transition-colors text-error"><span class="material-symbols-outlined text-lg">delete</span></button>
-                </td>
-            </tr>`).join('');
-    } catch(e) {}
-}
-
-function changePage(delta) { loadPatients(currentPage + delta); }
-function initials(name) { return (name || '??').split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase(); }
-
-function openModal() {
-    editMode = false;
-    document.getElementById('modal-title').textContent = 'Register Patient';
-    document.getElementById('modal-sub').textContent = 'Fill in the patient details below.';
-    document.getElementById('save-btn').textContent = 'Save Patient';
-    ['f-ssn','f-name','f-address','f-phone','f-insurance','f-pcp'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('f-ssn').disabled = false;
-    document.getElementById('modal-err').classList.add('hidden');
-    document.getElementById('modal').classList.replace('hidden','flex');
-}
-
-function openEdit(p) {
-    editMode = true;
-    document.getElementById('modal-title').textContent = 'Edit Patient';
-    document.getElementById('modal-sub').textContent = `Editing SSN: ${p.ssn}`;
-    document.getElementById('save-btn').textContent = 'Update Patient';
-    document.getElementById('f-ssn').value = p.ssn; document.getElementById('f-ssn').disabled = true;
-    document.getElementById('f-ssn-hidden').value = p.ssn;
-    document.getElementById('f-name').value = p.name;
-    document.getElementById('f-address').value = p.address;
-    document.getElementById('f-phone').value = p.phone;
-    document.getElementById('f-insurance').value = p.insuranceId;
-    document.getElementById('f-pcp').value = p.pcpId || '';
-    document.getElementById('modal-err').classList.add('hidden');
-    document.getElementById('modal').classList.replace('hidden','flex');
-}
-
-function closeModal() { document.getElementById('modal').classList.replace('flex','hidden'); }
-
-async function savePatient() {
-    const errEl = document.getElementById('modal-err');
-    errEl.classList.add('hidden');
-    const ssn = editMode ? parseInt(document.getElementById('f-ssn-hidden').value) : parseInt(document.getElementById('f-ssn').value);
-    const payload = {
-        ssn, name: document.getElementById('f-name').value.trim(),
-        address: document.getElementById('f-address').value.trim(),
-        phone: document.getElementById('f-phone').value.trim(),
-        insuranceId: document.getElementById('f-insurance').value.trim(),
-        pcpId: document.getElementById('f-pcp').value ? parseInt(document.getElementById('f-pcp').value) : null
-    };
-    if (!payload.ssn || !payload.name || !payload.address || !payload.phone || !payload.insuranceId) {
-        errEl.textContent = 'SSN, Name, Address, Phone, and Insurance ID are required.'; errEl.classList.remove('hidden'); return;
     }
-    const btn = document.getElementById('save-btn'); btn.disabled = true;
-    try {
-        const url  = editMode ? `/api/v1/patients/${ssn}` : '/api/v1/patients';
-        const meth = editMode ? 'PUT' : 'POST';
-        const res  = await apiFetch(url, { method: meth, body: JSON.stringify(payload) });
-        if (!res) return;
-        const body = await res.json();
-        if (!res.ok) { errEl.textContent = body.message || 'Error saving patient.'; errEl.classList.remove('hidden'); return; }
-        showToast(editMode ? 'Patient updated!' : 'Patient registered!');
-        closeModal();
-        loadPatients(currentPage);
-    } catch(e) { errEl.textContent = e.message; errEl.classList.remove('hidden'); }
-    finally { btn.disabled = false; }
-}
 
-async function deletePatient(ssn) {
-    confirmAction(`Delete patient SSN ${ssn}? This action cannot be undone.`, async () => {
-        const res = await apiFetch(`/api/v1/patients/${ssn}`, { method: 'DELETE' });
-        if (res && res.ok) { showToast('Patient deleted.'); loadPatients(currentPage); }
-        else showToast('Failed to delete patient.', 'error');
-    });
-}
+    async function doSearch() {
+        const q = document.getElementById('search-input').value.trim();
+        if (!q) { loadPatients(0); return; }
+        const tbody = document.getElementById('patient-tbody');
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">Searching…</td></tr>';
+        try {
+            const res = await apiFetch('/api/v1/patients/search?query=' + encodeURIComponent(q) + '&page=0&size=20');
+            if (!res || !res.data) return;
+            currentList = res.data.content || [];
+            document.getElementById('page-info').textContent = res.data.totalElements + ' result(s) found';
+            if (currentList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">No matches.</td></tr>';
+            } else {
+                tbody.innerHTML = currentList.map(p =>
+                    '<tr class="hover:bg-primary-fixed/20 transition-colors">' +
+                        '<td class="px-6 py-4 text-sm font-medium text-primary">' + p.ssn + '</td>' +
+                        '<td class="px-6 py-4 font-semibold text-on-surface text-sm">' + p.name + '</td>' +
+                        '<td class="px-6 py-4 text-sm text-on-surface-variant">' + p.phone + '</td>' +
+                        '<td class="px-6 py-4 text-sm text-on-surface-variant">' + p.insuranceId + '</td>' +
+                        '<td class="px-6 py-4 text-sm text-on-surface-variant">' + (p.pcpId || '—') + '</td>' +
+                        '<td class="px-6 py-4 text-sm text-on-surface-variant">' + p.address + '</td>' +
+                        '<td class="px-6 py-4">' +
+                            '<div class="flex gap-2">' +
+                                '<button onclick="openEditById(' + p.ssn + ')" class="p-1.5 hover:bg-primary-fixed/30 rounded-lg text-primary"><span class="material-symbols-outlined text-lg">edit</span></button>' +
+                                '<button onclick="deletePatient(' + p.ssn + ')" class="p-1.5 hover:bg-error-container rounded-lg text-error"><span class="material-symbols-outlined text-lg">delete</span></button>' +
+                            '</div>' +
+                        '</td>' +
+                    '</tr>').join('');
+            }
+        } catch(e) { console.error(e); }
+    }
 
-// Init
-loadPatients(0);
-document.getElementById('search-input').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
-</script>
-</body>
-</html>
+    function openEditById(ssn) {
+        const p = currentList.find(x => x.ssn === ssn);
+        if (!p) return;
+        editMode = true;
+        document.getElementById('modal-title').textContent = 'Edit Patient';
+        document.getElementById('modal-sub').textContent = 'Editing SSN: ' + p.ssn;
+        document.getElementById('save-btn').textContent = 'Update Patient';
+        document.getElementById('f-ssn').value = p.ssn; 
+        document.getElementById('f-ssn').disabled = true;
+        document.getElementById('f-ssn-hidden').value = p.ssn;
+        document.getElementById('f-name').value = p.name;
+        document.getElementById('f-address').value = p.address;
+        document.getElementById('f-phone').value = p.phone;
+        document.getElementById('f-insurance').value = p.insuranceId;
+        document.getElementById('f-pcp').value = p.pcpId || '';
+        document.getElementById('modal-err').classList.add('hidden');
+        document.getElementById('modal').classList.replace('hidden', 'flex');
+    }
+
+    function openModal() {
+        editMode = false;
+        document.getElementById('modal-title').textContent = 'Register Patient';
+        document.getElementById('modal-sub').textContent = 'Fill in the patient details below.';
+        document.getElementById('save-btn').textContent = 'Save Patient';
+        ['f-ssn','f-name','f-address','f-phone','f-insurance','f-pcp'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('f-ssn').disabled = false;
+        document.getElementById('modal-err').classList.add('hidden');
+        document.getElementById('modal').classList.replace('hidden', 'flex');
+    }
+
+    function closeModal() { document.getElementById('modal').classList.replace('flex', 'hidden'); }
+
+    async function savePatient() {
+        const errEl = document.getElementById('modal-err');
+        errEl.classList.add('hidden');
+        const ssn = editMode ? parseInt(document.getElementById('f-ssn-hidden').value) : parseInt(document.getElementById('f-ssn').value);
+        const payload = {
+            ssn, name: document.getElementById('f-name').value.trim(),
+            address: document.getElementById('f-address').value.trim(),
+            phone: document.getElementById('f-phone').value.trim(),
+            insuranceId: document.getElementById('f-insurance').value.trim(),
+            pcpId: document.getElementById('f-pcp').value ? parseInt(document.getElementById('f-pcp').value) : null
+        };
+        if (!payload.ssn || !payload.name || !payload.address || !payload.phone || !payload.insuranceId) {
+            errEl.textContent = 'All highlighted fields are required.'; errEl.classList.remove('hidden'); return;
+        }
+        const btn = document.getElementById('save-btn'); 
+        btn.disabled = true;
+        try {
+            const url = editMode ? '/api/v1/patients/' + ssn : '/api/v1/patients';
+            const res = await apiFetch(url, { method: editMode ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+            if (res && res.success) {
+                showToast(editMode ? 'Patient updated!' : 'Patient registered!');
+                closeModal();
+                loadPatients(currentPage);
+            } else if (res) {
+                errEl.textContent = res.message || 'Error saving data.';
+                errEl.classList.remove('hidden');
+            }
+        } catch(e) { errEl.textContent = e.message; errEl.classList.remove('hidden'); }
+        finally { btn.disabled = false; }
+    }
+
+    async function deletePatient(ssn) {
+        confirmAction('Delete patient SSN ' + ssn + '?', async () => {
+            const res = await apiFetch('/api/v1/patients/' + ssn, { method: 'DELETE' });
+            if (res && res.success) { showToast('Patient deleted.'); loadPatients(currentPage); }
+        });
+    }
+
+    // Global initialization
+    loadPatients(0);
+    buildPhysicianDropdown('f-pcp');
+    document.getElementById('search-input').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+    </script>
+</section>
