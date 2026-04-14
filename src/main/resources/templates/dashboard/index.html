@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Dashboard — Clinical Precision HMS</title></head>
+<body>
+<section class="p-8 min-h-screen">
+
+    <!-- Page Title -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-extrabold tracking-tight text-on-surface font-headline">Dashboard</h2>
+        <p class="text-on-surface-variant mt-1">Hospital-wide operational summary</p>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8" id="kpi-grid">
+        <!-- Skeleton -->
+        <div class="col-span-1 bg-surface-container-low p-6 rounded-xl animate-pulse"><div class="h-4 bg-slate-200 rounded w-1/2 mb-3"></div><div class="h-8 bg-slate-200 rounded w-2/3"></div></div>
+        <div class="col-span-1 bg-surface-container-low p-6 rounded-xl animate-pulse"><div class="h-4 bg-slate-200 rounded w-1/2 mb-3"></div><div class="h-8 bg-slate-200 rounded w-2/3"></div></div>
+        <div class="col-span-1 bg-surface-container-low p-6 rounded-xl animate-pulse"><div class="h-4 bg-slate-200 rounded w-1/2 mb-3"></div><div class="h-8 bg-slate-200 rounded w-2/3"></div></div>
+        <div class="col-span-1 bg-surface-container-low p-6 rounded-xl animate-pulse"><div class="h-4 bg-slate-200 rounded w-1/2 mb-3"></div><div class="h-8 bg-slate-200 rounded w-2/3"></div></div>
+    </div>
+
+    <!-- Second row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+        <div class="bg-gradient-to-br from-primary to-primary-container p-6 rounded-xl text-white relative overflow-hidden">
+            <p class="text-sm font-semibold opacity-80 mb-1">Today's Appointments</p>
+            <p class="text-4xl font-extrabold font-headline" id="stat-today-apt">—</p>
+            <span class="material-symbols-outlined absolute right-[-16px] bottom-[-16px] text-[100px] opacity-10">event</span>
+        </div>
+        <div class="bg-surface-container-low p-6 rounded-xl">
+            <p class="text-sm text-outline font-semibold mb-1">Room Occupancy</p>
+            <p class="text-4xl font-extrabold font-headline text-on-surface" id="stat-occupancy">—</p>
+            <div class="mt-3 bg-surface-container h-2 rounded-full overflow-hidden">
+                <div class="h-2 bg-primary rounded-full transition-all" id="occupancy-bar" style="width:0%"></div>
+            </div>
+            <p class="text-xs text-outline mt-1" id="stat-rooms">— / — rooms</p>
+        </div>
+        <div class="bg-surface-container-low p-6 rounded-xl">
+            <p class="text-sm text-outline font-semibold mb-1">Total Revenue (Procedures)</p>
+            <p class="text-4xl font-extrabold font-headline text-on-surface" id="stat-revenue">—</p>
+        </div>
+    </div>
+
+    <!-- Department Stats Table -->
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+        <div class="px-8 py-5 border-b border-surface-container-low">
+            <h3 class="text-lg font-bold font-headline text-on-surface">Department Overview</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                <tr class="bg-surface-container-low/50">
+                    <th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-wider">Department</th>
+                    <th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-wider">Head</th>
+                    <th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-wider">Physicians</th>
+                </tr>
+                </thead>
+                <tbody id="dept-tbody" class="divide-y divide-surface-container-low/50">
+                <tr><td colspan="3" class="px-8 py-6 text-center text-outline text-sm">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+    async function loadDashboard() {
+        const kpiGrid = document.getElementById('kpi-grid');
+        const deptTbody = document.getElementById('dept-tbody');
+        
+        try {
+            const [summaryRes, deptsRes] = await Promise.all([
+                apiFetch('/api/dashboard/summary'),
+                apiFetch('/api/dashboard/departments')
+            ]);
+
+            if (!summaryRes || !summaryRes.success) {
+                kpiGrid.innerHTML = '<div class="col-span-4 p-8 bg-error-container/10 text-error rounded-xl text-center">Summary data unavailable.</div>';
+            } else {
+                const d = summaryRes.data || {};
+                kpiGrid.innerHTML = 
+                    '<div class="col-span-1 bg-surface-container-low p-6 rounded-xl border border-outline-variant/10 shadow-sm">' +
+                        '<p class="text-sm text-outline font-semibold mb-2">Total Patients</p>' +
+                        '<p class="text-3xl font-extrabold font-headline text-primary">' + (d.totalPatients || 0).toLocaleString() + '</p>' +
+                    '</div>' +
+                    '<div class="col-span-1 bg-surface-container-low p-6 rounded-xl border border-outline-variant/10 shadow-sm">' +
+                        '<p class="text-sm text-outline font-semibold mb-2">Total Physicians</p>' +
+                        '<p class="text-3xl font-extrabold font-headline text-on-surface">' + (d.totalPhysicians || 0).toLocaleString() + '</p>' +
+                    '</div>' +
+                    '<div class="col-span-1 bg-surface-container-low p-6 rounded-xl border border-outline-variant/10 shadow-sm">' +
+                        '<p class="text-sm text-outline font-semibold mb-2">Total Nurses</p>' +
+                        '<p class="text-3xl font-extrabold font-headline text-on-surface">' + (d.totalNurses || 0).toLocaleString() + '</p>' +
+                    '</div>' +
+                    '<div class="col-span-1 bg-surface-container-low p-6 rounded-xl border border-outline-variant/10 shadow-sm">' +
+                        '<p class="text-sm text-outline font-semibold mb-2">Total Appointments</p>' +
+                        '<p class="text-3xl font-extrabold font-headline text-tertiary">' + (d.totalAppointments || 0).toLocaleString() + '</p>' +
+                    '</div>';
+
+                document.getElementById('stat-today-apt').textContent = (d.todayAppointments || 0).toLocaleString();
+                const pct = d.totalRooms > 0 ? Math.round((d.occupiedRooms / d.totalRooms) * 100) : 0;
+                document.getElementById('stat-occupancy').textContent = pct + '%';
+                document.getElementById('occupancy-bar').style.width = pct + '%';
+                document.getElementById('stat-rooms').textContent = (d.occupiedRooms || 0) + ' / ' + (d.totalRooms || 0) + ' rooms';
+                document.getElementById('stat-revenue').textContent = '$' + (d.totalRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            }
+
+            if (!deptsRes || !deptsRes.success) {
+                deptTbody.innerHTML = '<tr><td colspan="3" class="px-8 py-10 text-center text-error">Department data error.</td></tr>';
+            } else {
+                const depts = deptsRes.data || [];
+                if (depts.length === 0) {
+                    deptTbody.innerHTML = '<tr><td colspan="3" class="px-8 py-10 text-center text-outline text-sm">Hospital database is currently empty.</td></tr>';
+                } else {
+                    deptTbody.innerHTML = depts.map(dept => 
+                        '<tr class="hover:bg-primary-fixed/20 transition-colors">' +
+                            '<td class="px-8 py-4 font-semibold text-on-surface text-sm">' + dept.departmentName + '</td>' +
+                            '<td class="px-8 py-4 text-sm text-on-surface-variant italic">' + (dept.headName || 'No Head Assigned') + '</td>' +
+                            '<td class="px-8 py-4 text-sm font-bold text-primary">' +
+                                '<button onclick="openModal()" data-admin-only class="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-sky-700 transition-all active:scale-95 shadow-lg shadow-primary/20 text-sm">' +
+                                    '<span class="material-symbols-outlined text-[14px]">medical_services</span>' +
+                                    dept.physicianCount + ' Physicians' +
+                                '</button>' +
+                            '</td>' +
+                        '</tr>').join('');
+                }
+            }
+        } catch (error) {
+            console.error('Dashboard Error:', error);
+            kpiGrid.innerHTML = '<div class="col-span-4 p-8 bg-error-container/10 text-error rounded-xl text-center">Real-time stats unavailable.</div>';
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+    } else {
+        loadDashboard();
+    }
+</script>
+</section>
+</body>
+</html>

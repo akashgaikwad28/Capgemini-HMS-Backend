@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Medical Records — HMS</title></head>
+<body>
+<section class="p-8 min-h-screen">
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <h2 class="text-3xl font-extrabold tracking-tight text-on-surface font-headline">Medical Records</h2>
+            <p class="text-on-surface-variant mt-1">Record procedures performed and retrieve patient procedural history.</p>
+        </div>
+        <button onclick="openModal()" data-admin-doctor-nurse class="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-sky-700 transition-all active:scale-95 shadow-lg shadow-primary/20 text-sm">
+            <span class="material-symbols-outlined">add</span> Record Procedure
+        </button>
+    </div>
+
+    <!-- Lookup Tabs -->
+    <div class="flex gap-3 mb-6 bg-surface-container-low rounded-xl p-4 flex-wrap items-center gap-y-3">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-outline text-lg">person_search</span>
+            <p class="text-sm font-medium text-on-surface-variant">By Patient SSN:</p>
+            <input id="lookup-ssn" type="number" placeholder="100000001" class="px-3 py-2 bg-white border border-outline-variant/30 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 w-36"/>
+            <button onclick="lookupByPatient()" class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-sky-700">View History</button>
+        </div>
+        <div class="w-px h-8 bg-outline-variant/30 hidden md:block"></div>
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-outline text-lg">hotel</span>
+            <p class="text-sm font-medium text-on-surface-variant">By Stay ID:</p>
+            <input id="lookup-stay" type="number" placeholder="1" class="px-3 py-2 bg-white border border-outline-variant/30 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 w-24"/>
+            <button onclick="lookupByStay()" class="px-4 py-2 bg-secondary text-white text-sm font-semibold rounded-lg hover:opacity-80">View Stay</button>
+        </div>
+        <button onclick="clearLookup()" class="ml-auto px-4 py-2 bg-surface-container text-on-surface text-sm font-medium rounded-lg hover:bg-surface-container-high">Clear</button>
+    </div>
+
+    <!-- Results Table -->
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-surface-container-low">
+            <p class="text-sm font-semibold text-outline" id="table-label">Select a lookup above to view medical records.</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-surface-container-low/50">
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Patient SSN</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Procedure</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Stay ID</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Physician</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Nurse</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Notes</th>
+                    </tr>
+                </thead>
+                <tbody id="rec-tbody">
+                    <tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">No data.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Record Procedure Modal -->
+    <div id="modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/20 backdrop-blur-sm">
+        <div class="bg-surface-container-lowest w-full max-w-lg rounded-2xl shadow-2xl p-8 m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-6">
+                <h3 class="text-xl font-extrabold text-on-surface font-headline">Record Procedure</h3>
+                <button onclick="closeModal()" class="p-2 hover:bg-surface-container-low rounded-full"><span class="material-symbols-outlined text-outline">close</span></button>
+            </div>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Patient SSN *</label>
+                        <input id="f-ssn" type="number" placeholder="100000001" class="field-input mt-1"/>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Procedure *</label>
+                        <select id="f-proc" class="field-input mt-1">
+                            <option value="">— Select Procedure —</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Stay ID *</label>
+                        <input id="f-stay" type="number" placeholder="1" class="field-input mt-1"/>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Date/Time *</label>
+                        <input id="f-date" type="datetime-local" class="field-input mt-1"/>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Physician *</label>
+                        <select id="f-phys" class="field-input mt-1">
+                            <option value="">— Select Physician —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Assisting Nurse *</label>
+                        <select id="f-nurse" class="field-input mt-1">
+                            <option value="">— Select Nurse —</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-outline uppercase tracking-wider">Clinical Notes</label>
+                    <textarea id="f-notes" rows="3" placeholder="Procedure successful. Patient stable." class="field-input mt-1 resize-none"></textarea>
+                </div>
+                <div id="modal-err" class="hidden text-error text-sm bg-error-container rounded-lg px-3 py-2"></div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeModal()" class="flex-1 py-3 bg-surface-container-high text-on-surface-variant font-bold rounded-xl text-sm">Cancel</button>
+                    <button onclick="saveRecord()" id="save-btn" class="flex-[2] py-3 bg-primary text-white font-bold rounded-xl hover:bg-sky-700 active:scale-95 text-sm shadow-lg shadow-primary/20">Record</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .field-input { display:block; width:100%; padding:0.6rem 0.875rem; background:#f3f4f5; border:none; border-radius:0.75rem; font-size:0.875rem; outline:none; }
+    .field-input:focus { background:#fff; box-shadow:0 0 0 2px rgba(0,99,151,0.15); }
+    </style>
+
+    <script>
+function fmtDt(dt) { return dt ? new Date(dt).toLocaleString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'; }
+
+
+    function renderRecords(records) {
+        const tbody = document.getElementById('rec-tbody');
+        if (!records || !records.length) { tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">No records found.</td></tr>'; return; }
+        tbody.innerHTML = records.map(r => {
+            const patientSsn = r.patient ? r.patient.ssn : (r.id ? r.id.patientSsn : '—');
+            const procCode = r.procedure ? r.procedure.name : (r.id ? r.id.procedureCode : '—');
+            const stayId = r.stay ? r.stay.stayId : (r.id ? r.id.stayId : '—');
+            const date = r.id ? r.id.dateUndergoes : r.dateUndergoes;
+            const physId = r.physician ? (r.physician.name || r.physician.employeeId) : '—';
+            const nurseId = r.assistingNurse ? (r.assistingNurse.name || r.assistingNurse.employeeId) : '—';
+            const notes = r.notes || '—';
+            
+            return '<tr class="hover:bg-primary-fixed/20 transition-colors">' +
+                '<td class="px-6 py-4 text-sm font-medium text-primary">' + patientSsn + '</td>' +
+                '<td class="px-6 py-4 text-sm font-semibold text-on-surface">' + procCode + '</td>' +
+                '<td class="px-6 py-4 text-sm text-on-surface-variant">' + stayId + '</td>' +
+                '<td class="px-6 py-4 text-sm text-on-surface">' + fmtDt(date) + '</td>' +
+                '<td class="px-6 py-4 text-sm text-on-surface-variant">' + physId + '</td>' +
+                '<td class="px-6 py-4 text-sm text-on-surface-variant">' + nurseId + '</td>' +
+                '<td class="px-6 py-4 text-sm text-on-surface-variant max-w-xs truncate" title="' + notes.replace(/"/g, '&quot;') + '">' + notes + '</td>' +
+            '</tr>';
+        }).join('');
+    }
+
+
+    async function lookupByPatient() {
+        const ssn = document.getElementById('lookup-ssn').value;
+        if (!ssn) { showToast('Enter a patient SSN.', 'warn'); return; }
+        document.getElementById('table-label').textContent = 'Medical history for Patient SSN: ' + ssn;
+        document.getElementById('rec-tbody').innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>';
+        const res = await apiFetch('/api/v1/medical-records/patient/' + ssn);
+        if (!res || !res.data) return;
+        renderRecords(res.data);
+    }
+
+    async function lookupByStay() {
+        const stayId = document.getElementById('lookup-stay').value;
+        if (!stayId) { showToast('Enter a stay ID.', 'warn'); return; }
+        document.getElementById('table-label').textContent = 'Procedures for Stay #' + stayId;
+        document.getElementById('rec-tbody').innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>';
+        const res = await apiFetch('/api/v1/medical-records/stay/' + stayId);
+        if (!res || !res.data) return;
+        renderRecords(res.data);
+    }
+
+    function clearLookup() {
+        ['lookup-ssn','lookup-stay'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('table-label').textContent = 'Select a lookup above to view medical records.';
+        document.getElementById('rec-tbody').innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">No data.</td></tr>';
+    }
+
+
+function openModal() {
+    const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    ['f-ssn','f-proc','f-stay','f-phys','f-nurse','f-notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-date').value = now.toISOString().slice(0,16);
+    document.getElementById('modal-err').classList.add('hidden');
+    document.getElementById('modal').classList.replace('hidden','flex');
+}
+
+function closeModal() { document.getElementById('modal').classList.replace('flex','hidden'); }
+
+async function saveRecord() {
+    const errEl = document.getElementById('modal-err'); errEl.classList.add('hidden');
+    const payload = {
+        patientSsn: parseInt(document.getElementById('f-ssn').value),
+        procedureCode: parseInt(document.getElementById('f-proc').value),
+        stayId: parseInt(document.getElementById('f-stay').value),
+        dateUndergoes: document.getElementById('f-date').value || null,
+        physicianId: parseInt(document.getElementById('f-phys').value),
+        assistingNurseId: parseInt(document.getElementById('f-nurse').value),
+        notes: document.getElementById('f-notes').value.trim() || null
+    };
+    if (!payload.patientSsn || !payload.procedureCode || !payload.stayId || !payload.dateUndergoes || !payload.physicianId || !payload.assistingNurseId) {
+        errEl.textContent = 'Please fill all required fields.'; errEl.classList.remove('hidden'); return;
+    }
+    const btn = document.getElementById('save-btn'); btn.disabled = true;
+    try {
+        const res = await apiFetch('/api/v1/medical-records/procedure', { method: 'POST', body: JSON.stringify(payload) });
+        if (!res) return;
+        if (!res.success) { errEl.textContent = res.message || 'Error.'; errEl.classList.remove('hidden'); return; }
+        showToast('Procedure recorded!');
+        closeModal();
+    } catch(e) { errEl.textContent = e.message; errEl.classList.remove('hidden'); }
+    finally { btn.disabled = false; }
+}
+applyRoleVisibility();
+buildProcedureDropdown('f-proc');
+buildPhysicianDropdown('f-phys');
+buildNurseDropdown('f-nurse');
+    </script>
+</section>

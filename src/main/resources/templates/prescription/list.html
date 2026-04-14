@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Prescriptions — HMS</title></head>
+<body>
+<section class="p-8 min-h-screen">
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <h2 class="text-3xl font-extrabold tracking-tight text-on-surface font-headline">Prescriptions</h2>
+            <p class="text-on-surface-variant mt-1">Issue prescriptions and view patient medication history.</p>
+        </div>
+        <button onclick="openModal()" data-admin-doctor class="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-sky-700 transition-all active:scale-95 shadow-lg shadow-primary/20 text-sm">
+            <span class="material-symbols-outlined">add</span> New Prescription
+        </button>
+    </div>
+
+    <!-- Lookup -->
+    <div class="flex gap-3 mb-6 bg-surface-container-low rounded-xl p-4 items-center flex-wrap">
+        <span class="material-symbols-outlined text-outline">person_search</span>
+        <p class="text-sm font-medium text-on-surface-variant">View prescriptions for patient SSN:</p>
+        <input id="lookup-ssn" type="number" placeholder="100000001" class="px-3 py-2 bg-white border border-outline-variant/30 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 w-36"/>
+        <button onclick="lookupPatient()" class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-sky-700">Lookup</button>
+        <button onclick="clearLookup()" class="px-4 py-2 bg-surface-container text-on-surface text-sm font-medium rounded-lg hover:bg-surface-container-high">Clear</button>
+    </div>
+
+    <!-- Results Table -->
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-surface-container-low">
+            <p class="text-sm font-semibold text-outline" id="table-label">Enter a patient SSN above to view prescriptions.</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-surface-container-low/50">
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Physician ID</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Patient SSN</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Medication Code</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Dose</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Appointment ID</th>
+                    </tr>
+                </thead>
+                <tbody id="rx-tbody">
+                    <tr><td colspan="6" class="px-6 py-8 text-center text-outline text-sm">No data to display.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- New Prescription Modal -->
+    <div id="modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/20 backdrop-blur-sm">
+        <div class="bg-surface-container-lowest w-full max-w-lg rounded-2xl shadow-2xl p-8 m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-6">
+                <h3 class="text-xl font-extrabold text-on-surface font-headline">Issue Prescription</h3>
+                <button onclick="closeModal()" class="p-2 hover:bg-surface-container-low rounded-full"><span class="material-symbols-outlined text-outline">close</span></button>
+            </div>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Physician *</label>
+                        <select id="f-pid" class="field-input mt-1">
+                            <option value="">— Select Physician —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Patient SSN *</label>
+                        <input id="f-ssn" type="number" placeholder="100000001" class="field-input mt-1"/>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Medication *</label>
+                        <select id="f-med" class="field-input mt-1">
+                            <option value="">— Select Medication —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Date/Time *</label>
+                        <input id="f-date" type="datetime-local" class="field-input mt-1"/>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-outline uppercase tracking-wider">Dose Instructions *</label>
+                    <input id="f-dose" type="text" placeholder="500mg twice daily for 7 days" class="field-input mt-1"/>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-outline uppercase tracking-wider">Appointment ID (optional)</label>
+                    <input id="f-apt" type="number" placeholder="1" class="field-input mt-1"/>
+                </div>
+                <div id="modal-err" class="hidden text-error text-sm bg-error-container rounded-lg px-3 py-2"></div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeModal()" class="flex-1 py-3 bg-surface-container-high text-on-surface-variant font-bold rounded-xl text-sm">Cancel</button>
+                    <button onclick="savePrescription()" id="save-btn" class="flex-[2] py-3 bg-primary text-white font-bold rounded-xl hover:bg-sky-700 active:scale-95 text-sm shadow-lg shadow-primary/20">Issue Prescription</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .field-input { display:block; width:100%; padding:0.6rem 0.875rem; background:#f3f4f5; border:none; border-radius:0.75rem; font-size:0.875rem; outline:none; }
+    .field-input:focus { background:#fff; box-shadow:0 0 0 2px rgba(0,99,151,0.15); }
+    </style>
+
+    <script>
+function fmtDt(dt) { return dt ? new Date(dt).toLocaleString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'; }
+
+
+    async function lookupPatient() {
+        const ssn = document.getElementById('lookup-ssn').value;
+        if (!ssn) { showToast('Enter a patient SSN.', 'warn'); return; }
+        document.getElementById('table-label').textContent = 'Prescriptions for Patient SSN: ' + ssn;
+        const tbody = document.getElementById('rx-tbody');
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>';
+        try {
+            const res = await apiFetch('/api/v1/prescriptions/patient/' + ssn);
+            if (!res || !res.data) return;
+            const rxList = res.data;
+            if (!rxList || !rxList.length) { tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-outline text-sm">No prescriptions found for this patient.</td></tr>'; return; }
+            tbody.innerHTML = rxList.map(rx => {
+                const physId = rx.physician ? rx.physician.employeeId : (rx.id ? rx.id.physicianId : '—');
+                const patientSsn = rx.patient ? rx.patient.ssn : (rx.id ? rx.id.patientSsn : '—');
+                const medCode = rx.medication ? rx.medication.code : (rx.id ? rx.id.medicationCode : '—');
+                const medName = rx.medication ? rx.medication.name : '';
+                const date = rx.id ? rx.id.date : null;
+                const aptId = rx.appointment ? rx.appointment.appointmentId : '—';
+                
+                return '<tr class="hover:bg-primary-fixed/20 transition-colors">' +
+                    '<td class="px-6 py-4 text-sm font-medium text-primary">' + physId + '</td>' +
+                    '<td class="px-6 py-4 text-sm text-on-surface-variant">' + patientSsn + '</td>' +
+                    '<td class="px-6 py-4 text-sm font-semibold text-on-surface">' + medCode + ' — ' + medName + '</td>' +
+                    '<td class="px-6 py-4 text-sm text-on-surface">' + fmtDt(date) + '</td>' +
+                    '<td class="px-6 py-4 text-sm text-on-surface-variant">' + rx.dose + '</td>' +
+                    '<td class="px-6 py-4 text-sm text-on-surface-variant">' + aptId + '</td>' +
+                '</tr>';
+            }).join('');
+        } catch(e) { console.error(e); }
+    }
+
+
+function clearLookup() {
+    document.getElementById('lookup-ssn').value = '';
+    document.getElementById('table-label').textContent = 'Enter a patient SSN above to view prescriptions.';
+    document.getElementById('rx-tbody').innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-outline text-sm">No data to display.</td></tr>';
+}
+
+function openModal() {
+    const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    ['f-pid','f-ssn','f-med','f-dose','f-apt'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-date').value = now.toISOString().slice(0,16);
+    document.getElementById('modal-err').classList.add('hidden');
+    document.getElementById('modal').classList.replace('hidden','flex');
+}
+
+function closeModal() { document.getElementById('modal').classList.replace('flex','hidden'); }
+
+async function savePrescription() {
+    const errEl = document.getElementById('modal-err'); errEl.classList.add('hidden');
+    const payload = {
+        physicianId: parseInt(document.getElementById('f-pid').value),
+        patientSsn: parseInt(document.getElementById('f-ssn').value),
+        medicationCode: parseInt(document.getElementById('f-med').value),
+        date: document.getElementById('f-date').value || null,
+        dose: document.getElementById('f-dose').value.trim(),
+        appointmentId: document.getElementById('f-apt').value ? parseInt(document.getElementById('f-apt').value) : null
+    };
+    if (!payload.physicianId || !payload.patientSsn || !payload.medicationCode || !payload.date || !payload.dose) {
+        errEl.textContent = 'Please fill all required fields.'; errEl.classList.remove('hidden'); return;
+    }
+    const btn = document.getElementById('save-btn'); btn.disabled = true;
+    try {
+        const res = await apiFetch('/api/v1/prescriptions', { method: 'POST', body: JSON.stringify(payload) });
+        if (!res) return;
+        if (!res.success) { errEl.textContent = res.message || 'Error.'; errEl.classList.remove('hidden'); return; }
+        showToast('Prescription issued!');
+        closeModal();
+        // Refresh if we were looking at this patient
+        const currentSsn = document.getElementById('lookup-ssn').value;
+        if (currentSsn && parseInt(currentSsn) === payload.patientSsn) lookupPatient();
+    } catch(e) { errEl.textContent = e.message; errEl.classList.remove('hidden'); }
+    finally { btn.disabled = false; }
+}
+applyRoleVisibility();
+buildPhysicianDropdown('f-pid');
+buildMedicationDropdown('f-med');
+    </script>
+</section>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Certifications — HMS</title></head>
+<body>
+<section class="p-8 min-h-screen">
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <h2 class="text-3xl font-extrabold tracking-tight text-on-surface font-headline">Physician Certifications</h2>
+            <p class="text-on-surface-variant mt-1">Certify physicians for procedures and view their skill sets.</p>
+        </div>
+        <button onclick="openModal()" data-admin-only class="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-sky-700 transition-all active:scale-95 shadow-lg shadow-primary/20 text-sm">
+            <span class="material-symbols-outlined">verified</span> Add Certification
+        </button>
+    </div>
+
+    <!-- Lookup -->
+    <div class="flex gap-3 mb-6 bg-surface-container-low rounded-xl p-4 items-center">
+        <span class="material-symbols-outlined text-outline">badge</span>
+        <p class="text-sm font-medium text-on-surface-variant">View certifications for physician:</p>
+        <input id="lookup-pid" type="number" placeholder="Physician ID (e.g. 101)" class="px-3 py-2 bg-white border border-outline-variant/30 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 w-40"/>
+        <button onclick="lookupPhysician()" class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-sky-700">View Skills</button>
+        <button onclick="clearLookup()" class="px-4 py-2 bg-surface-container text-on-surface text-sm font-medium rounded-lg hover:bg-surface-container-high">Clear</button>
+    </div>
+
+    <!-- Results Table -->
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-surface-container-low">
+            <p class="text-sm font-semibold text-outline" id="table-label">Enter a physician ID to view their certifications.</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-surface-container-low/50">
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Physician ID</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Procedure</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Certified On</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Expires</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="cert-tbody">
+                    <tr><td colspan="5" class="px-6 py-8 text-center text-outline text-sm">No data.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add Certification Modal -->
+    <div id="modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/20 backdrop-blur-sm">
+        <div class="bg-surface-container-lowest w-full max-w-md rounded-2xl shadow-2xl p-8 m-4">
+            <div class="flex justify-between items-start mb-6">
+                <h3 class="text-xl font-extrabold text-on-surface font-headline">Certify Physician</h3>
+                <button onclick="closeModal()" class="p-2 hover:bg-surface-container-low rounded-full"><span class="material-symbols-outlined text-outline">close</span></button>
+            </div>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Physician *</label>
+                        <select id="f-pid" class="field-input mt-1">
+                            <option value="">— Select Physician —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Procedure *</label>
+                        <select id="f-proc" class="field-input mt-1">
+                            <option value="">— Select Procedure —</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Certification Date *</label>
+                        <input id="f-date" type="datetime-local" class="field-input mt-1"/>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Expiry Date *</label>
+                        <input id="f-exp" type="datetime-local" class="field-input mt-1"/>
+                    </div>
+                </div>
+                <div id="modal-err" class="hidden text-error text-sm bg-error-container rounded-lg px-3 py-2"></div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeModal()" class="flex-1 py-3 bg-surface-container-high text-on-surface-variant font-bold rounded-xl text-sm">Cancel</button>
+                    <button onclick="saveCert()" id="save-btn" class="flex-[2] py-3 bg-primary text-white font-bold rounded-xl hover:bg-sky-700 active:scale-95 text-sm shadow-lg shadow-primary/20">Certify</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .field-input { display:block; width:100%; padding:0.6rem 0.875rem; background:#f3f4f5; border:none; border-radius:0.75rem; font-size:0.875rem; outline:none; }
+    .field-input:focus { background:#fff; box-shadow:0 0 0 2px rgba(0,99,151,0.15); }
+    </style>
+
+    <script>
+    function fmtDt(dt) { return dt ? new Date(dt).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}) : '—'; }
+
+    async function lookupPhysician() {
+        const pid = document.getElementById('lookup-pid').value;
+        if (!pid) { showToast('Enter a physician ID.', 'warn'); return; }
+        document.getElementById('table-label').textContent = 'Certifications for Physician ID: ' + pid;
+        document.getElementById('cert-tbody').innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>';
+        
+        try {
+            const res = await apiFetch('/api/v1/certifications/physician/' + pid);
+            if (!res || !res.data) return;
+            const certs = res.data;
+            if (!certs || !certs.length) { 
+                document.getElementById('cert-tbody').innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-outline text-sm">No certifications found.</td></tr>'; 
+                return; 
+            }
+            document.getElementById('cert-tbody').innerHTML = certs.map(c => {
+                const expires = c.id ? c.id.certificationExpires : (c.certificationExpires || null);
+                const isExpired = expires && new Date(expires) < new Date();
+                const physId = c.physician ? c.physician.employeeId : (c.id ? c.id.physicianId : '—');
+                const procName = c.treatment ? c.treatment.name : (c.procedure ? c.procedure.name : (c.id ? c.id.treatmentCode : '—'));
+                const certDate = c.id ? c.id.certificationDate : (c.certificationDate || null);
+                
+                return '<tr class="hover:bg-primary-fixed/20 transition-colors">' +
+                    '<td class="px-6 py-4 text-sm font-medium text-primary">' + physId + '</td>' +
+                    '<td class="px-6 py-4 text-sm font-semibold text-on-surface">' + procName + '</td>' +
+                    '<td class="px-6 py-4 text-sm text-on-surface">' + fmtDt(certDate) + '</td>' +
+                    '<td class="px-6 py-4 text-sm text-on-surface">' + fmtDt(expires) + '</td>' +
+                    '<td class="px-6 py-4">' +
+                        '<span class="px-3 py-1 rounded-full text-xs font-bold ' + (isExpired ? 'bg-error-container text-on-error-container' : 'bg-secondary-container text-on-secondary-container') + '">' +
+                            (isExpired ? 'Expired' : 'Valid') +
+                        '</span>' +
+                    '</td>' +
+                '</tr>';
+            }).join('');
+        } catch(e) { document.getElementById('cert-tbody').innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-error text-sm">Load error.</td></tr>'; }
+    }
+
+    function clearLookup() {
+        document.getElementById('lookup-pid').value = '';
+        document.getElementById('table-label').textContent = 'Enter a physician ID to view their certifications.';
+        document.getElementById('cert-tbody').innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-outline text-sm">No data.</td></tr>';
+    }
+
+    function openModal() {
+        ['f-pid','f-proc','f-date','f-exp'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('modal-err').classList.add('hidden');
+        document.getElementById('modal').classList.replace('hidden','flex');
+    }
+
+    function closeModal() { document.getElementById('modal').classList.replace('flex','hidden'); }
+
+    async function saveCert() {
+        const errEl = document.getElementById('modal-err'); errEl.classList.add('hidden');
+        const payload = {
+            physicianId: parseInt(document.getElementById('f-pid').value),
+            procedureCode: parseInt(document.getElementById('f-proc').value),
+            certificationDate: document.getElementById('f-date').value || null,
+            certificationExpires: document.getElementById('f-exp').value || null
+        };
+        if (!payload.physicianId || !payload.procedureCode || !payload.certificationDate || !payload.certificationExpires) {
+            errEl.textContent = 'All fields are required.'; errEl.classList.remove('hidden'); return;
+        }
+        const btn = document.getElementById('save-btn'); btn.disabled = true;
+        try {
+            const res = await apiFetch('/api/v1/certifications', { method: 'POST', body: JSON.stringify(payload) });
+            if (res && res.success) {
+                showToast('Physician certified!');
+                closeModal();
+                const pid = document.getElementById('lookup-pid').value;
+                if (pid && parseInt(pid) === payload.physicianId) lookupPhysician();
+            } else if (res) {
+                errEl.textContent = res.message || 'Error.'; errEl.classList.remove('hidden');
+            }
+        } catch(e) { errEl.textContent = e.message; errEl.classList.remove('hidden'); }
+        finally { btn.disabled = false; }
+    }
+    applyRoleVisibility();
+    buildPhysicianDropdown('f-pid');
+    buildProcedureDropdown('f-proc');
+    </script>
+</section>

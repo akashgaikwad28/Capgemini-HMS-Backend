@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Rooms — HMS</title></head>
+<body>
+<section class="p-8 min-h-screen">
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <h2 class="text-3xl font-extrabold tracking-tight text-on-surface font-headline">Rooms</h2>
+            <p class="text-on-surface-variant mt-1">Manage hospital rooms, availability and block assignments.</p>
+        </div>
+        <button onclick="openModal()" class="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-sky-700 transition-all active:scale-95 shadow-lg shadow-primary/20 text-sm">
+            <span class="material-symbols-outlined">add</span> Add Room
+        </button>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-surface-container-low/50">
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Room No.</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Block Floor</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Block Code</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="room-tbody" class="divide-y divide-surface-container-low/50">
+                    <tr><td colspan="6" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="px-6 py-4 flex justify-between items-center border-t border-surface-container-low text-sm text-on-surface-variant">
+            <span id="page-info">—</span>
+            <div class="flex gap-2">
+                <button id="prev-btn" onclick="changePage(-1)" class="px-3 py-1.5 bg-surface-container rounded-lg hover:bg-surface-container-high">← Prev</button>
+                <button id="next-btn" onclick="changePage(1)"  class="px-3 py-1.5 bg-surface-container rounded-lg hover:bg-surface-container-high">Next →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/20 backdrop-blur-sm">
+        <div class="bg-surface-container-lowest w-full max-w-md rounded-2xl shadow-2xl p-8 m-4">
+            <div class="flex justify-between items-start mb-6">
+                <h3 class="text-xl font-extrabold text-on-surface font-headline" id="modal-title">Add Room</h3>
+                <button onclick="closeModal()" class="p-2 hover:bg-surface-container-low rounded-full"><span class="material-symbols-outlined text-outline">close</span></button>
+            </div>
+            <input type="hidden" id="f-num-hidden"/>
+            <div class="space-y-4">
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Room No. *</label>
+                        <input id="f-num" type="number" placeholder="101" class="field-input mt-1"/>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Block Floor *</label>
+                        <input id="f-floor" type="number" placeholder="1" class="field-input mt-1"/>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Block Code *</label>
+                        <input id="f-code" type="number" placeholder="1" class="field-input mt-1"/>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-outline uppercase tracking-wider">Room Type *</label>
+                    <select id="f-type" class="field-input mt-1">
+                        <option value="">— Select type —</option>
+                        <option value="Single">Single</option>
+                        <option value="Double">Double</option>
+                        <option value="Suite">Suite</option>
+                        <option value="ICU">ICU</option>
+                        <option value="General">General</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input id="f-unavail" type="checkbox" class="w-4 h-4 rounded accent-primary"/>
+                    <label for="f-unavail" class="text-sm font-medium text-on-surface">Mark as Unavailable</label>
+                </div>
+                <div id="modal-err" class="hidden text-error text-sm bg-error-container rounded-lg px-3 py-2"></div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeModal()" class="flex-1 py-3 bg-surface-container-high text-on-surface-variant font-bold rounded-xl text-sm">Cancel</button>
+                    <button onclick="saveRoom()" id="save-btn" class="flex-[2] py-3 bg-primary text-white font-bold rounded-xl hover:bg-sky-700 active:scale-95 text-sm shadow-lg shadow-primary/20">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .field-input { display:block; width:100%; padding:0.6rem 0.875rem; background:#f3f4f5; border:none; border-radius:0.75rem; font-size:0.875rem; outline:none; }
+    .field-input:focus { background:#fff; box-shadow:0 0 0 2px rgba(0,99,151,0.15); }
+    </style>
+
+    <script>
+let currentPage = 0, editMode = false, currentRoomList = [];
+
+async function loadRooms(page) {
+    currentPage = page;
+    const tbody = document.getElementById('room-tbody');
+    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>';
+    try {
+        const res = await apiFetch('/api/v1/rooms?page=' + page + '&size=12&sort=roomNumber,asc');
+        if (!res || !res.data) return;
+        var data = res.data;
+        currentRoomList = data.content || [];
+        document.getElementById('page-info').textContent = 'Page ' + (data.pageNo+1) + ' of ' + data.totalPages + ' (' + data.totalElements + ' total)';
+        document.getElementById('prev-btn').disabled = data.pageNo === 0;
+        document.getElementById('next-btn').disabled = data.last;
+        if (!currentRoomList.length) { tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-outline text-sm">No rooms found.</td></tr>'; return; }
+        tbody.innerHTML = currentRoomList.map(r =>
+            '<tr class="hover:bg-primary-fixed/20 transition-colors">' +
+                '<td class="px-6 py-4 text-sm font-bold text-primary">' + r.roomNumber + '</td>' +
+                '<td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold ' + roomTypeColor(r.roomType) + '">' + r.roomType + '</span></td>' +
+                '<td class="px-6 py-4 text-sm text-on-surface-variant">Floor ' + r.blockFloor + '</td>' +
+                '<td class="px-6 py-4 text-sm text-on-surface-variant">Block ' + r.blockCode + '</td>' +
+                '<td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold ' + (r.unavailable ? 'bg-error-container text-on-error-container' : 'bg-secondary-container text-on-secondary-container') + '">' + (r.unavailable ? 'Unavailable' : 'Available') + '</span></td>' +
+                '<td class="px-6 py-4">' +
+                    '<div class="flex gap-2">' +
+                        '<button onclick="openEditRoom(' + r.roomNumber + ')" class="p-1.5 hover:bg-primary-fixed/30 rounded-lg text-primary"><span class="material-symbols-outlined text-lg">edit</span></button>' +
+                        '<button onclick="deleteRoom(' + r.roomNumber + ')" class="p-1.5 hover:bg-error-container rounded-lg text-error"><span class="material-symbols-outlined text-lg">delete</span></button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>').join('');
+    } catch(e) { console.error(e); }
+}
+
+function roomTypeColor(t) {
+    var m = { ICU: 'bg-error-container text-on-error-container', Suite: 'bg-tertiary-fixed text-on-tertiary-container', Single: 'bg-secondary-container text-on-secondary-container', Double: 'bg-primary-fixed text-on-primary-container', General: 'bg-surface-container-high text-on-surface-variant' };
+    return m[t] || 'bg-surface-container text-on-surface-variant';
+}
+
+function changePage(d) { loadRooms(currentPage + d); }
+
+function openModal() {
+    editMode = false;
+    document.getElementById('modal-title').textContent = 'Add Room';
+    document.getElementById('save-btn').textContent = 'Save Room';
+    ['f-num','f-floor','f-code'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-type').value = '';
+    document.getElementById('f-unavail').checked = false;
+    document.getElementById('f-num').disabled = false;
+    document.getElementById('modal-err').classList.add('hidden');
+    document.getElementById('modal').classList.replace('hidden','flex');
+}
+
+function openEditRoom(roomNum) {
+    var r = currentRoomList.find(x => x.roomNumber === roomNum);
+    if (!r) return;
+    editMode = true;
+    document.getElementById('modal-title').textContent = 'Edit Room';
+    document.getElementById('save-btn').textContent = 'Update';
+    document.getElementById('f-num').value = r.roomNumber; document.getElementById('f-num').disabled = true;
+    document.getElementById('f-num-hidden').value = r.roomNumber;
+    document.getElementById('f-floor').value = r.blockFloor;
+    document.getElementById('f-code').value = r.blockCode;
+    document.getElementById('f-type').value = r.roomType;
+    document.getElementById('f-unavail').checked = r.unavailable;
+    document.getElementById('modal-err').classList.add('hidden');
+    document.getElementById('modal').classList.replace('hidden','flex');
+}
+
+function closeModal() { document.getElementById('modal').classList.replace('flex','hidden'); }
+
+async function saveRoom() {
+    var errEl = document.getElementById('modal-err'); errEl.classList.add('hidden');
+    var num = editMode ? parseInt(document.getElementById('f-num-hidden').value) : parseInt(document.getElementById('f-num').value);
+    var payload = { roomNumber: num, roomType: document.getElementById('f-type').value, blockFloor: parseInt(document.getElementById('f-floor').value), blockCode: parseInt(document.getElementById('f-code').value), unavailable: document.getElementById('f-unavail').checked };
+    if (!payload.roomNumber || !payload.roomType || !payload.blockFloor || !payload.blockCode) { errEl.textContent = 'All fields are required.'; errEl.classList.remove('hidden'); return; }
+    var btn = document.getElementById('save-btn'); btn.disabled = true;
+    try {
+        var res = await apiFetch(editMode ? '/api/v1/rooms/' + num : '/api/v1/rooms', { method: editMode ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+        if (res && res.success) {
+            showToast(editMode ? 'Room updated!' : 'Room added!');
+            closeModal(); loadRooms(currentPage);
+        } else if (res) {
+            errEl.textContent = res.message || 'Error.'; errEl.classList.remove('hidden');
+        }
+    } catch(e) { errEl.textContent = e.message; errEl.classList.remove('hidden'); }
+    finally { btn.disabled = false; }
+}
+
+async function deleteRoom(num) {
+    confirmAction('Delete room #' + num + '?', async () => {
+        var res = await apiFetch('/api/v1/rooms/' + num, { method: 'DELETE' });
+        if (res && res.success) { showToast('Room deleted.'); loadRooms(currentPage); }
+        else showToast('Failed.', 'error');
+    });
+}
+
+loadRooms(0);
+    </script>
+</section>

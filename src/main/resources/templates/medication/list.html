@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Medications — HMS</title></head>
+<body>
+<section class="p-8 min-h-screen">
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <h2 class="text-3xl font-extrabold tracking-tight text-on-surface font-headline">Medications</h2>
+            <p class="text-on-surface-variant mt-1">Manage the hospital formulary and drug catalog.</p>
+        </div>
+        <button onclick="openModal()" class="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-sky-700 transition-all active:scale-95 shadow-lg shadow-primary/20 text-sm">
+            <span class="material-symbols-outlined">add</span> Add Medication
+        </button>
+    </div>
+
+    <!-- Search -->
+    <div class="flex gap-3 mb-6">
+        <div class="relative flex-1 max-w-sm">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-xl">search</span>
+            <input id="search-input" type="text" placeholder="Search by name or brand…"
+                   class="w-full pl-10 pr-4 py-2.5 bg-surface-container-lowest border border-outline-variant/30 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"/>
+        </div>
+        <button onclick="doSearch()" class="px-4 py-2.5 bg-surface-container text-on-surface text-sm font-medium rounded-xl hover:bg-surface-container-high">Search</button>
+        <button onclick="loadMedications(0)" class="px-4 py-2.5 bg-surface-container text-on-surface text-sm font-medium rounded-xl hover:bg-surface-container-high">Reset</button>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-surface-container-low/50">
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Code</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Generic Name</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Brand</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Description</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="med-tbody" class="divide-y divide-surface-container-low/50">
+                    <tr><td colspan="5" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="px-6 py-4 flex justify-between items-center border-t border-surface-container-low text-sm text-on-surface-variant">
+            <span id="page-info">—</span>
+            <div id="pager"></div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/20 backdrop-blur-sm">
+        <div class="bg-surface-container-lowest w-full max-w-md rounded-2xl shadow-2xl p-8 m-4">
+            <div class="flex justify-between items-start mb-6">
+                <h3 class="text-xl font-extrabold text-on-surface font-headline" id="modal-title">Add Medication</h3>
+                <button onclick="closeModal()" class="p-2 hover:bg-surface-container-low rounded-full"><span class="material-symbols-outlined text-outline">close</span></button>
+            </div>
+            <input type="hidden" id="f-code-hidden"/>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Code *</label>
+                        <input id="f-code" type="number" placeholder="1" class="field-input mt-1"/>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Brand *</label>
+                        <input id="f-brand" type="text" placeholder="Panadol" class="field-input mt-1"/>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-outline uppercase tracking-wider">Generic Name *</label>
+                    <input id="f-name" type="text" placeholder="Paracetamol" class="field-input mt-1"/>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-outline uppercase tracking-wider">Description *</label>
+                    <textarea id="f-desc" rows="3" placeholder="Analgesic and antipyretic medication…" class="field-input mt-1 resize-none"></textarea>
+                </div>
+                <div id="modal-err" class="hidden text-error text-sm bg-error-container rounded-lg px-3 py-2"></div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeModal()" class="flex-1 py-3 bg-surface-container-high text-on-surface-variant font-bold rounded-xl text-sm">Cancel</button>
+                    <button onclick="saveMedication()" id="save-btn" class="flex-[2] py-3 bg-primary text-white font-bold rounded-xl hover:bg-sky-700 active:scale-95 text-sm shadow-lg shadow-primary/20">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .field-input { display:block; width:100%; padding:0.6rem 0.875rem; background:#f3f4f5; border:none; border-radius:0.75rem; font-size:0.875rem; outline:none; }
+    .field-input:focus { background:#fff; box-shadow:0 0 0 2px rgba(0,99,151,0.15); }
+    </style>
+
+    <script>
+    let currentPage = 0;
+    let currentList = [];
+    let editMode = false;
+
+    async function loadMedications(page) {
+        currentPage = page;
+        const tbody = document.getElementById('med-tbody');
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>';
+        
+        try {
+            const res = await apiFetch('/api/v1/medications?page=' + page + '&size=10&sort=code,asc');
+            if (!res || !res.data) return;
+            
+            const data = res.data;
+            currentList = data.content || [];
+            
+            document.getElementById('page-info').textContent = 'Page ' + (data.pageNo + 1) + ' of ' + data.totalPages + ' (' + data.totalElements + ' records)';
+            buildPaginationControls('pager', data.totalPages, data.pageNo, 'loadMedications');
+            
+            if (currentList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-outline text-sm">No medications found.</td></tr>'; 
+            } else {
+                tbody.innerHTML = currentList.map(m => 
+                    '<tr class="hover:bg-primary-fixed/20 transition-colors">' +
+                        '<td class="px-6 py-4 text-sm font-bold text-primary">#' + m.code + '</td>' +
+                        '<td class="px-6 py-4 text-sm font-semibold text-on-surface">' + m.name + '</td>' +
+                        '<td class="px-6 py-4"><span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-container rounded-full text-xs font-bold">' + m.brand + '</span></td>' +
+                        '<td class="px-6 py-4 text-sm text-on-surface-variant max-w-xs truncate" title="' + m.description.replace(/"/g, '&quot;') + '">' + m.description + '</td>' +
+                        '<td class="px-6 py-4">' +
+                            '<div class="flex gap-2">' +
+                                '<button onclick="openEditById(' + m.code + ')" class="p-1.5 hover:bg-primary-fixed/30 rounded-lg text-primary"><span class="material-symbols-outlined text-lg">edit</span></button>' +
+                                '<button onclick="deleteMed(' + m.code + ')" class="p-1.5 hover:bg-error-container rounded-lg text-error"><span class="material-symbols-outlined text-lg">delete</span></button>' +
+                            '</div>' +
+                        '</td>' +
+                    '</tr>').join('');
+            }
+            applyRoleVisibility();
+        } catch(e) { 
+            console.error(e);
+            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-error text-sm">Failed to load: ' + e.message + '</td></tr>'; 
+        }
+    }
+
+    function openEditById(code) {
+        const m = currentList.find(x => x.code === code);
+        if (!m) return;
+        editMode = true;
+        document.getElementById('modal-title').textContent = 'Edit Medication';
+        document.getElementById('save-btn').textContent = 'Update';
+        document.getElementById('f-code').value = m.code; 
+        document.getElementById('f-code').disabled = true;
+        document.getElementById('f-code-hidden').value = m.code;
+        document.getElementById('f-name').value = m.name;
+        document.getElementById('f-brand').value = m.brand;
+        document.getElementById('f-desc').value = m.description;
+        document.getElementById('modal-err').classList.add('hidden');
+        document.getElementById('modal').classList.replace('hidden','flex');
+    }
+
+    function openModal() {
+        editMode = false;
+        document.getElementById('modal-title').textContent = 'Add Medication';
+        document.getElementById('save-btn').textContent = 'Save';
+        ['f-code','f-name','f-brand','f-desc'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('f-code').disabled = false;
+        document.getElementById('modal-err').classList.add('hidden');
+        document.getElementById('modal').classList.replace('hidden','flex');
+    }
+
+    function closeModal() { document.getElementById('modal').classList.replace('flex','hidden'); }
+
+    async function saveMedication() {
+        const errEl = document.getElementById('modal-err'); 
+        errEl.classList.add('hidden');
+        const code = editMode ? parseInt(document.getElementById('f-code-hidden').value) : parseInt(document.getElementById('f-code').value);
+        const payload = { code, name: document.getElementById('f-name').value.trim(), brand: document.getElementById('f-brand').value.trim(), description: document.getElementById('f-desc').value.trim() };
+        if (!payload.code || !payload.name || !payload.brand || !payload.description) { 
+            errEl.textContent = 'All fields required.'; errEl.classList.remove('hidden'); return; 
+        }
+        const btn = document.getElementById('save-btn'); 
+        btn.disabled = true;
+        try {
+            const res = await apiFetch(editMode ? '/api/v1/medications/' + code : '/api/v1/medications', { method: editMode ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+            if (res && res.success) {
+                showToast(editMode ? 'Medication updated!' : 'Medication added!');
+                closeModal(); loadMedications(currentPage);
+            } else if (res) {
+                errEl.textContent = res.message || 'Error.';
+                errEl.classList.remove('hidden');
+            }
+        } catch(e) { errEl.textContent = e.message; errEl.classList.remove('hidden'); }
+        finally { btn.disabled = false; }
+    }
+
+    async function deleteMed(code) {
+        confirmAction('Delete medication #' + code + '?', async () => {
+            const res = await apiFetch('/api/v1/medications/' + code, { method: 'DELETE' });
+            if (res && res.success) { showToast('Medication deleted.'); loadMedications(currentPage); }
+        });
+    }
+
+    // Init
+    loadMedications(0);
+    </script>
+</section>
+</body>
+</html>

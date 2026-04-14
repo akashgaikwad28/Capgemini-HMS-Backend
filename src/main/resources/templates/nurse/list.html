@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Nurses — HMS</title></head>
+<body>
+<section class="p-8 min-h-screen">
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <h2 class="text-3xl font-extrabold tracking-tight text-on-surface font-headline">Nurses</h2>
+            <p class="text-on-surface-variant mt-1">Manage nursing staff profiles and registration status.</p>
+        </div>
+        <button onclick="openModal()" data-admin-nurse class="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-sky-700 transition-all active:scale-95 shadow-lg shadow-primary/20 text-sm">
+            <span class="material-symbols-outlined">person_add</span> Add Nurse
+        </button>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-surface-container-low/50">
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">ID</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Position</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">SSN</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Registered</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="nurse-tbody" class="divide-y divide-surface-container-low/50">
+                    <tr><td colspan="6" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="px-6 py-4 flex justify-between items-center border-t border-surface-container-low text-sm text-on-surface-variant">
+            <span id="page-info">—</span>
+            <div id="pager"></div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/20 backdrop-blur-sm">
+        <div class="bg-surface-container-lowest w-full max-w-md rounded-2xl shadow-2xl p-8 m-4">
+            <div class="flex justify-between items-start mb-6">
+                <h3 class="text-xl font-extrabold text-on-surface font-headline" id="modal-title">Add Nurse</h3>
+                <button onclick="closeModal()" class="p-2 hover:bg-surface-container-low rounded-full"><span class="material-symbols-outlined text-outline">close</span></button>
+            </div>
+            <input type="hidden" id="f-id-hidden"/>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Employee ID *</label>
+                        <input id="f-id" type="number" placeholder="501" class="field-input mt-1"/>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">SSN *</label>
+                        <input id="f-ssn" type="number" placeholder="800000001" class="field-input mt-1"/>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-outline uppercase tracking-wider">Full Name *</label>
+                    <input id="f-name" type="text" placeholder="Nurse Jackie" class="field-input mt-1"/>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-outline uppercase tracking-wider">Position *</label>
+                    <input id="f-position" type="text" placeholder="Head Nurse" class="field-input mt-1"/>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input id="f-registered" type="checkbox" class="w-4 h-4 rounded accent-primary" checked/>
+                    <label for="f-registered" class="text-sm font-medium text-on-surface">Registered / Licensed</label>
+                </div>
+                <div id="modal-err" class="hidden text-error text-sm bg-error-container rounded-lg px-3 py-2"></div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeModal()" class="flex-1 py-3 bg-surface-container-high text-on-surface-variant font-bold rounded-xl text-sm">Cancel</button>
+                    <button onclick="saveNurse()" id="save-btn" class="flex-[2] py-3 bg-primary text-white font-bold rounded-xl hover:bg-sky-700 active:scale-95 text-sm shadow-lg shadow-primary/20">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <style>
+    .field-input { display:block; width:100%; padding:0.6rem 0.875rem; background:#f3f4f5; border:none; border-radius:0.75rem; font-size:0.875rem; outline:none; }
+    .field-input:focus { background:#fff; box-shadow:0 0 0 2px rgba(0,99,151,0.15); }
+    </style>
+
+    <script>
+    let currentPage = 0;
+    let currentList = [];
+    let editMode = false;
+
+    async function loadNurses(page) {
+        currentPage = page;
+        const tbody = document.getElementById('nurse-tbody');
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>';
+        
+        try {
+            const res = await apiFetch('/api/v1/nurses?page=' + page + '&size=10&sort=employeeId,asc');
+            if (!res || !res.data) return;
+            
+            const data = res.data;
+            currentList = data.content || [];
+            
+            document.getElementById('page-info').textContent = 'Page ' + (data.pageNo + 1) + ' of ' + data.totalPages + ' (' + data.totalElements + ' records)';
+            buildPaginationControls('pager', data.totalPages, data.pageNo, 'loadNurses');
+            
+            if (currentList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-outline text-sm">No nurses found.</td></tr>'; 
+            } else {
+                tbody.innerHTML = currentList.map(n => 
+                    '<tr class="hover:bg-primary-fixed/20 transition-colors">' +
+                        '<td class="px-6 py-4 text-sm font-medium text-primary">' + n.employeeId + '</td>' +
+                        '<td class="px-6 py-4">' +
+                            '<div class="flex items-center gap-2">' +
+                                '<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-xs font-bold text-primary">' + (n.name || '??').split(' ').map(x=>x[0]).join('').toUpperCase() + '</div>' +
+                                '<span class="font-semibold text-on-surface text-sm">' + n.name + '</span>' +
+                            '</div>' +
+                        '</td>' +
+                        '<td class="px-6 py-4 text-sm text-on-surface-variant">' + n.position + '</td>' +
+                        '<td class="px-6 py-4 text-sm text-on-surface-variant">' + n.ssn + '</td>' +
+                        '<td class="px-6 py-4">' +
+                            '<span class="px-3 py-1 rounded-full text-xs font-bold ' + (n.registered ? 'bg-secondary-container text-on-secondary-container' : 'bg-error-container text-on-error-container') + '">' + (n.registered ? 'Registered' : 'Unregistered') + '</span>' +
+                        '</td>' +
+                        '<td class="px-6 py-4">' +
+                            '<div class="flex gap-2">' +
+                                '<button onclick="openEditById(' + n.employeeId + ')" data-admin-only class="p-1.5 hover:bg-primary-fixed/30 rounded-lg text-primary" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button>' +
+                                '<button onclick="deleteNurse(' + n.employeeId + ')" data-admin-only class="p-1.5 hover:bg-error-container rounded-lg text-error" title="Delete"><span class="material-symbols-outlined text-lg">delete</span></button>' +
+                            '</div>' +
+                        '</td>' +
+                    '</tr>').join('');
+            }
+            applyRoleVisibility();
+        } catch(e) { 
+            console.error(e);
+            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-error text-sm">Failed to load nurses.</td></tr>'; 
+        }
+    }
+
+    function openEditById(id) {
+        const n = currentList.find(x => x.employeeId === id);
+        if (!n) return;
+        editMode = true;
+        document.getElementById('modal-title').textContent = 'Edit Nurse';
+        document.getElementById('save-btn').textContent = 'Update';
+        document.getElementById('f-id').value = n.employeeId; 
+        document.getElementById('f-id').disabled = true;
+        document.getElementById('f-id-hidden').value = n.employeeId;
+        document.getElementById('f-ssn').value = n.ssn;
+        document.getElementById('f-name').value = n.name;
+        document.getElementById('f-position').value = n.position;
+        document.getElementById('f-registered').checked = n.registered;
+        document.getElementById('modal-err').classList.add('hidden');
+        document.getElementById('modal').classList.replace('hidden','flex');
+    }
+
+    function openModal() {
+        editMode = false;
+        document.getElementById('modal-title').textContent = 'Add Nurse';
+        document.getElementById('save-btn').textContent = 'Save Nurse';
+        ['f-id','f-ssn','f-name','f-position'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('f-id').disabled = false;
+        document.getElementById('f-registered').checked = true;
+        document.getElementById('modal-err').classList.add('hidden');
+        document.getElementById('modal').classList.replace('hidden','flex');
+    }
+
+    function closeModal() { document.getElementById('modal').classList.replace('flex','hidden'); }
+
+    async function saveNurse() {
+        const errEl = document.getElementById('modal-err'); 
+        errEl.classList.add('hidden');
+        const id = editMode ? parseInt(document.getElementById('f-id-hidden').value) : parseInt(document.getElementById('f-id').value);
+        const payload = { employeeId: id, name: document.getElementById('f-name').value.trim(), position: document.getElementById('f-position').value.trim(), ssn: parseInt(document.getElementById('f-ssn').value), registered: document.getElementById('f-registered').checked };
+        if (!payload.employeeId || !payload.name || !payload.position || !payload.ssn) { 
+            errEl.textContent = 'All fields required.'; errEl.classList.remove('hidden'); return; 
+        }
+        const btn = document.getElementById('save-btn'); 
+        btn.disabled = true;
+        try {
+            const res = await apiFetch(editMode ? '/api/v1/nurses/' + id : '/api/v1/nurses', { method: editMode ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+            if (res && res.success) {
+                showToast(editMode ? 'Nurse updated!' : 'Nurse added!');
+                closeModal(); loadNurses(currentPage);
+            } else if (res) {
+                errEl.textContent = res.message || 'Error saving nurse.';
+                errEl.classList.remove('hidden');
+            }
+        } catch(e) { errEl.textContent = e.message; errEl.classList.remove('hidden'); }
+        finally { btn.disabled = false; }
+    }
+
+    async function deleteNurse(id) {
+        confirmAction('Delete nurse ID ' + id + '?', async () => {
+            const res = await apiFetch('/api/v1/nurses/' + id, { method: 'DELETE' });
+            if (res && res.success) { showToast('Nurse deleted.'); loadNurses(currentPage); }
+        });
+    }
+
+    loadNurses(0);
+    </script>
+</section>

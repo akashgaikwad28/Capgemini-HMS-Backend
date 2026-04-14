@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Patient Stays — HMS</title></head>
+<body>
+<section class="p-8 min-h-screen">
+    <div class="flex justify-between items-end mb-8">
+        <div>
+            <h2 class="text-3xl font-extrabold tracking-tight text-on-surface font-headline">Patient Stays</h2>
+            <p class="text-on-surface-variant mt-1">Manage admissions, room assignments and discharges.</p>
+        </div>
+        <div class="flex gap-2">
+            <div class="relative max-w-xs">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-xl">search</span>
+                <input id="search-ssn" type="number" placeholder="Patient SSN..." class="pl-10 pr-4 py-2.5 bg-surface-container-lowest border border-outline-variant/30 rounded-xl text-sm w-48"/>
+            </div>
+            <button onclick="lookupByPatient()" class="px-4 py-2.5 bg-surface-container text-on-surface text-sm font-medium rounded-xl hover:bg-surface-container-high">Lookup</button>
+            <div class="w-px h-10 bg-outline-variant/30 mx-2"></div>
+            <button onclick="loadActive()" class="inline-flex items-center gap-2 px-4 py-3 bg-secondary-container text-on-secondary-container font-semibold rounded-xl hover:opacity-80 text-sm">
+                <span class="material-symbols-outlined text-base">person_check</span> Active Inpatients
+            </button>
+            <button onclick="openModal()" data-admin-nurse class="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-sky-700 transition-all active:scale-95 shadow-lg shadow-primary/20 text-sm">
+                <span class="material-symbols-outlined">add</span> Check-In Patient
+            </button>
+        </div>
+    </div>
+
+    <p id="view-label" class="text-sm font-semibold text-outline mb-4">All Stays</p>
+
+    <!-- Table -->
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-surface-container-low/50">
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Stay ID</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Patient</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Room</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Admitted</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Discharged</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-xs font-bold text-outline uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="stay-tbody" class="divide-y divide-surface-container-low/50">
+                    <tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="px-6 py-4 flex justify-between items-center border-t border-surface-container-low text-sm text-on-surface-variant">
+            <span id="page-info">—</span>
+            <div class="flex gap-2" id="pager">
+                <button id="prev-btn" onclick="changePage(-1)" class="px-3 py-1.5 bg-surface-container rounded-lg hover:bg-surface-container-high">← Prev</button>
+                <button id="next-btn" onclick="changePage(1)"  class="px-3 py-1.5 bg-surface-container rounded-lg hover:bg-surface-container-high">Next →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Check-In Modal -->
+    <div id="modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/20 backdrop-blur-sm">
+        <div class="bg-surface-container-lowest w-full max-w-md rounded-2xl shadow-2xl p-8 m-4">
+            <div class="flex justify-between items-start mb-6">
+                <h3 class="text-xl font-extrabold text-on-surface font-headline">Check-In Patient</h3>
+                <button onclick="closeModal()" class="p-2 hover:bg-surface-container-low rounded-full"><span class="material-symbols-outlined text-outline">close</span></button>
+            </div>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Patient SSN *</label>
+                        <input id="f-ssn" type="number" placeholder="100000001" class="field-input mt-1"/>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-outline uppercase tracking-wider">Room *</label>
+                        <select id="f-room" class="field-input mt-1">
+                            <option value="">— Select Room —</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-outline uppercase tracking-wider">Admission Date/Time *</label>
+                    <input id="f-start" type="datetime-local" class="field-input mt-1"/>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-outline uppercase tracking-wider">Clinical Notes</label>
+                    <textarea id="f-notes" rows="3" placeholder="Post-op recovery observation…" class="field-input mt-1 resize-none"></textarea>
+                </div>
+                <div id="modal-err" class="hidden text-error text-sm bg-error-container rounded-lg px-3 py-2"></div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeModal()" class="flex-1 py-3 bg-surface-container-high text-on-surface-variant font-bold rounded-xl text-sm">Cancel</button>
+                    <button onclick="checkIn()" id="save-btn" class="flex-[2] py-3 bg-primary text-white font-bold rounded-xl hover:bg-sky-700 active:scale-95 text-sm shadow-lg shadow-primary/20">Check In</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discharge / Update Modal -->
+    <div id="discharge-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/20 backdrop-blur-sm">
+        <div class="bg-surface-container-lowest w-full max-w-md rounded-2xl shadow-2xl p-8 m-4">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="text-xl font-extrabold text-on-surface font-headline">Update / Discharge Stay</h3>
+                    <p class="text-sm text-on-surface-variant mt-1" id="discharge-sub">Stay ID: —</p>
+                </div>
+                <button onclick="closeDischarge()" class="p-2 hover:bg-surface-container-low rounded-full"><span class="material-symbols-outlined text-outline">close</span></button>
+            </div>
+            <input type="hidden" id="d-stay-id"/>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs font-semibold text-outline uppercase tracking-wider">Update Notes</label>
+                    <textarea id="d-notes" rows="3" placeholder="Patient discharged. All vitals stable." class="field-input mt-1 resize-none"></textarea>
+                </div>
+                <div id="discharge-err" class="hidden text-error text-sm bg-error-container rounded-lg px-3 py-2"></div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeDischarge()" class="flex-1 py-3 bg-surface-container-high text-on-surface-variant font-bold rounded-xl text-sm">Cancel</button>
+                    <button onclick="doDischarge()" class="flex-[2] py-3 bg-tertiary text-white font-bold rounded-xl hover:opacity-80 active:scale-95 text-sm shadow-lg">Discharge / Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .field-input { display:block; width:100%; padding:0.6rem 0.875rem; background:#f3f4f5; border:none; border-radius:0.75rem; font-size:0.875rem; outline:none; }
+    .field-input:focus { background:#fff; box-shadow:0 0 0 2px rgba(0,99,151,0.15); }
+    </style>
+
+    <script>
+    let currentPage = 0, activeMode = false;
+    function fmtDt(dt) { return dt ? new Date(dt).toLocaleString('en-IN', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—'; }
+
+    async function loadStays(page) {
+        activeMode = false;
+        currentPage = page;
+        document.getElementById('view-label').textContent = 'All Stays';
+        document.getElementById('pager').style.display = 'flex';
+        const tbody = document.getElementById('stay-tbody');
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>';
+        
+        try {
+            const res = await apiFetch('/api/v1/stays?page=' + page + '&size=10&sort=stayId,asc');
+            if (!res || !res.data) return;
+            const data = res.data;
+            document.getElementById('page-info').textContent = 'Page ' + (data.pageNo + 1) + ' of ' + data.totalPages + ' (' + data.totalElements + ' total)';
+            buildPaginationControls('pager', data.totalPages, data.pageNo, 'loadStays');
+            renderRows(data.content);
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadActive() {
+        activeMode = true;
+        document.getElementById('view-label').textContent = 'Currently Admitted Patients';
+        document.getElementById('pager').style.display = 'none';
+        const tbody = document.getElementById('stay-tbody');
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>';
+        try {
+            const res = await apiFetch('/api/v1/stays/active');
+            if (res && res.data) {
+                document.getElementById('page-info').textContent = res.data.length + ' active inpatients';
+                renderRows(res.data);
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async function lookupByPatient() {
+        const ssn = document.getElementById('search-ssn').value;
+        if (!ssn) { loadStays(0); return; }
+        document.getElementById('view-label').textContent = 'Stay history for Patient SSN: ' + ssn;
+        document.getElementById('pager').style.display = 'none';
+        const tbody = document.getElementById('stay-tbody');
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>';
+        try {
+            const res = await apiFetch('/api/v1/stays/patient/' + ssn);
+            if (res && res.data) {
+                document.getElementById('page-info').textContent = res.data.length + ' record(s) found';
+                renderRows(res.data);
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function renderRows(stays) {
+        const tbody = document.getElementById('stay-tbody');
+        if (!stays || !stays.length) { tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-outline text-sm">No stays found.</td></tr>'; return; }
+        tbody.innerHTML = stays.map(s => 
+            '<tr class="hover:bg-primary-fixed/20 transition-colors">' +
+                '<td class="px-6 py-4 text-sm font-medium text-primary">#' + s.stayId + '</td>' +
+                '<td class="px-6 py-4 text-sm font-semibold text-on-surface">' + s.patientName + '</td>' +
+                '<td class="px-6 py-4 text-sm text-on-surface-variant">Room ' + s.roomNumber + '</td>' +
+                '<td class="px-6 py-4 text-sm text-on-surface">' + fmtDt(s.stayStart) + '</td>' +
+                '<td class="px-6 py-4 text-sm text-on-surface">' + fmtDt(s.stayEnd) + '</td>' +
+                '<td class="px-6 py-4">' +
+                    '<span class="px-3 py-1 rounded-full text-xs font-bold ' + (s.stayEnd ? 'bg-surface-container-high text-outline' : 'bg-secondary-container text-on-secondary-container') + '">' +
+                        (s.stayEnd ? 'Discharged' : 'Admitted') +
+                    '</span>' +
+                '</td>' +
+                '<td class="px-6 py-4">' +
+                    '<div class="flex gap-2">' +
+                        '<button onclick="openDischarge(' + s.stayId + ')" data-admin-nurse class="p-1.5 hover:bg-tertiary-fixed/50 rounded-lg text-tertiary" title="Discharge/Update"><span class="material-symbols-outlined text-lg">output</span></button>' +
+                        '<button onclick="deleteStay(' + s.stayId + ')" data-admin-only class="p-1.5 hover:bg-error-container rounded-lg text-error" title="Delete"><span class="material-symbols-outlined text-lg">delete</span></button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>'
+        ).join('');
+        applyRoleVisibility();
+    }
+
+    function openModal() {
+        const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('f-ssn').value = '';
+        document.getElementById('f-room').value = '';
+        buildRoomDropdown('f-room');
+        document.getElementById('f-start').value = now.toISOString().slice(0,16);
+        document.getElementById('f-notes').value = '';
+        document.getElementById('modal-err').classList.add('hidden');
+        document.getElementById('modal').classList.replace('hidden','flex');
+    }
+    function closeModal() { document.getElementById('modal').classList.replace('flex','hidden'); }
+
+    async function checkIn() {
+        const errEl = document.getElementById('modal-err'); errEl.classList.add('hidden');
+        const payload = { 
+            patientSsn: parseInt(document.getElementById('f-ssn').value), 
+            roomNumber: parseInt(document.getElementById('f-room').value), 
+            stayStart: document.getElementById('f-start').value || null, 
+            notes: document.getElementById('f-notes').value.trim() || null 
+        };
+        if (!payload.patientSsn || !payload.roomNumber || !payload.stayStart) { 
+            errEl.textContent = 'Patient SSN, Room, and Start time are required.'; 
+            errEl.classList.remove('hidden'); return; 
+        }
+        const btn = document.getElementById('save-btn'); btn.disabled = true;
+        try {
+            const res = await apiFetch('/api/v1/stays', { method: 'POST', body: JSON.stringify(payload) });
+            if (res && res.success) {
+                showToast('Patient checked in!');
+                closeModal(); loadStays(currentPage);
+            } else if (res) {
+                errEl.textContent = res.message || 'Error.'; errEl.classList.remove('hidden');
+            }
+        } catch(e) { errEl.textContent = e.message; errEl.classList.remove('hidden'); }
+        finally { btn.disabled = false; }
+    }
+
+    function openDischarge(stayId) {
+        document.getElementById('d-stay-id').value = stayId;
+        document.getElementById('discharge-sub').textContent = 'Stay ID: #' + stayId;
+        document.getElementById('d-notes').value = '';
+        document.getElementById('discharge-err').classList.add('hidden');
+        document.getElementById('discharge-modal').classList.replace('hidden','flex');
+    }
+    function closeDischarge() { document.getElementById('discharge-modal').classList.replace('flex','hidden'); }
+
+    async function doDischarge() {
+        const errEl = document.getElementById('discharge-err'); errEl.classList.add('hidden');
+        const stayId = document.getElementById('d-stay-id').value;
+        const notes = document.getElementById('d-notes').value.trim();
+        try {
+            const url = '/api/v1/stays/' + stayId + (notes ? '?notes=' + encodeURIComponent(notes) : '');
+            const res = await apiFetch(url, { method: 'PUT' });
+            if (res && res.success) {
+                showToast('Stay updated / Patient discharged!');
+                closeDischarge();
+                activeMode ? loadActive() : loadStays(currentPage);
+            } else if (res) {
+                errEl.textContent = res.message || 'Error.'; errEl.classList.remove('hidden');
+            }
+        } catch(e) { errEl.textContent = e.message; errEl.classList.remove('hidden'); }
+    }
+
+    async function deleteStay(id) {
+        confirmAction('Delete stay record #' + id + '?', async () => {
+            const res = await apiFetch('/api/v1/stays/' + id, { method: 'DELETE' });
+            if (res && res.success) { showToast('Stay deleted.'); loadStays(currentPage); }
+        });
+    }
+
+    loadStays(0);
+    </script>
+</section>
