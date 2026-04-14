@@ -24,11 +24,14 @@ public class DashboardSummaryDTO {
     @Schema(example = "12", description = "Number of appointments scheduled for today")
     private long todayAppointments;
 
+    @Schema(example = "1500", description = "Total number of appointments in the system")
+    private long totalAppointments;
+
     public DashboardSummaryDTO() {}
 
     public DashboardSummaryDTO(long totalPatients, long totalPhysicians, long totalNurses, 
                                long occupiedRooms, long totalRooms, Double totalRevenue, 
-                               long todayAppointments) {
+                               long todayAppointments, long totalAppointments) {
         this.totalPatients = totalPatients;
         this.totalPhysicians = totalPhysicians;
         this.totalNurses = totalNurses;
@@ -36,6 +39,7 @@ public class DashboardSummaryDTO {
         this.totalRooms = totalRooms;
         this.totalRevenue = totalRevenue;
         this.todayAppointments = todayAppointments;
+        this.totalAppointments = totalAppointments;
     }
 
     public long getTotalPatients() { return totalPatients; }
@@ -58,4 +62,7 @@ public class DashboardSummaryDTO {
 
     public long getTodayAppointments() { return todayAppointments; }
     public void setTodayAppointments(long todayAppointments) { this.todayAppointments = todayAppointments; }
+
+    public long getTotalAppointments() { return totalAppointments; }
+    public void setTotalAppointments(long totalAppointments) { this.totalAppointments = totalAppointments; }
 }
