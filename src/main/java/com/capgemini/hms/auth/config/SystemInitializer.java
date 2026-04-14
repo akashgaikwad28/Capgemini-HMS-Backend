@@ -54,7 +54,7 @@ public class SystemInitializer implements CommandLineRunner {
 
         // 2. Ensure Primary Admin Account Exists (Akash Gaikwad)
         if (!userRepository.existsByUsername("acashtech28")) {
-            User admin = new User("acashtech28", "acashtech28@gmail.com", encoder.encode("acash@9945"));
+            User admin = new User("acashtech28", "mouryarahul543@gmail.com", encoder.encode("Rahul123"));
             admin.setRoles(Collections.singleton(rolesMap.get(ERole.ROLE_ADMIN)));
             userRepository.save(admin);
             System.out.println("✅ Primary Admin account 'acashtech28' initialized successfully.");
