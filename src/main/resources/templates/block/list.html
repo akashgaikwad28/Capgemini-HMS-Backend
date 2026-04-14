@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head>
+    <title>Blocks — Clinical Precision HMS</title>
+</head>
+<body>
+<section class="p-8 min-h-screen">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <div class="flex items-center gap-2 text-sm font-semibold text-primary mb-1">
+                <span class="material-symbols-outlined text-sm">apartment</span>
+                Infrastructure
+            </div>
+            <h2 class="text-3xl font-extrabold tracking-tight text-on-surface font-headline">Blocks & Floors</h2>
+            <p class="text-on-surface-variant mt-1 text-sm">Manage physical hospital infrastructure.</p>
+        </div>
+        
+        <div class="flex gap-4">
+            <button onclick="openModal()" data-admin-only class="hidden items-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-sky-700 transition-all active:scale-95 shadow-lg shadow-primary/20">
+                <span class="material-symbols-outlined text-[18px]">add</span>
+                Add Block
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 gap-6">
+        <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/20 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-surface-container-low/50 border-b border-outline-variant/20">
+                            <th class="px-6 py-4 text-xs font-extrabold text-outline uppercase tracking-wider">Floor Level</th>
+                            <th class="px-6 py-4 text-xs font-extrabold text-outline uppercase tracking-wider">Block Code</th>
+                            <th class="px-6 py-4 text-xs font-extrabold text-outline uppercase tracking-wider w-24 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="block-tbody" class="divide-y divide-outline-variant/10 text-on-surface">
+                        <tr><td colspan="3" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Adding/Editing Block -->
+    <div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-inverse-surface/40 backdrop-blur-sm transition-opacity">
+        <div class="bg-surface-container-lowest w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform transition-all">
+            <div class="px-6 py-4 border-b border-outline-variant/20 flex justify-between items-center bg-surface-container-low/30">
+                <h3 class="text-lg font-bold font-headline text-on-surface" id="modal-title">Add Block</h3>
+                <button onclick="closeModal()" class="text-outline hover:text-on-surface transition-colors p-1 rounded-full hover:bg-surface-variant">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <div id="modal-err" class="hidden p-3 bg-error-container text-on-error-container text-sm rounded-xl font-medium"></div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-outline uppercase tracking-wide mb-1.5">Floor Number</label>
+                    <input type="number" id="f-floor" class="field-input" placeholder="e.g. 1, 2, 3">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-outline uppercase tracking-wide mb-1.5">Block Code</label>
+                    <input type="number" id="f-code" class="field-input" placeholder="e.g. 1, 2, 3">
+                    <p class="text-[11px] text-outline mt-1.5">A combination of floor and block code identifies a physical block.</p>
+                </div>
+            </div>
+            
+            <div class="px-6 py-4 bg-surface-container-low/30 border-t border-outline-variant/20 flex justify-end gap-3">
+                <button onclick="closeModal()" class="px-5 py-2.5 text-sm font-bold text-on-surface-variant hover:bg-surface-variant rounded-xl transition-colors">Cancel</button>
+                <button id="save-btn" onclick="saveBlock()" class="px-5 py-2.5 text-sm font-bold bg-primary text-white rounded-xl hover:bg-sky-700 transition-all shadow-md shadow-primary/20">Save Block</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .field-input { display:block; width:100%; padding:0.6rem 0.875rem; background:#f3f4f5; border:none; border-radius:0.75rem; font-size:0.875rem; outline:none; }
+    .field-input:focus { background:#fff; box-shadow:0 0 0 2px rgba(0,99,151,0.15); }
+    </style>
+
+    <script>
+    async function loadBlocks() {
+        const tbody = document.getElementById('block-tbody');
+        tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-outline text-sm">Loading…</td></tr>';
+        
+        try {
+            const res = await apiFetch('/api/v1/blocks');
+            if (!res || !res.data) return;
+            
+            const blocks = res.data;
+            if (!blocks.length) { 
+                tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-outline text-sm">No blocks found.</td></tr>'; 
+                return; 
+            }
+            
+            tbody.innerHTML = blocks.map(b => 
+                '<tr class="hover:bg-primary-fixed/20 transition-colors">' +
+                    '<td class="px-6 py-4 text-sm font-bold text-on-surface">Floor ' + b.blockFloor + '</td>' +
+                    '<td class="px-6 py-4 text-sm font-bold text-primary">Block ' + b.blockCode + '</td>' +
+                    '<td class="px-6 py-4 text-center">' +
+                        '<button onclick="deleteBlock(' + b.blockFloor + ', ' + b.blockCode + ')" data-admin-only class="p-1.5 hover:bg-error-container rounded-lg text-error transition-colors">' +
+                            '<span class="material-symbols-outlined text-lg">delete</span>' +
+                        '</button>' +
+                    '</td>' +
+                '</tr>'
+            ).join('');
+            
+            applyRoleVisibility();
+        } catch(e) { 
+            console.error(e);
+            tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-error text-sm">Failed to load blocks.</td></tr>'; 
+        }
+    }
+
+    function openModal() {
+        document.getElementById('modal-title').textContent = 'Add Block';
+        document.getElementById('save-btn').textContent = 'Save Block';
+        document.getElementById('f-floor').value = '';
+        document.getElementById('f-code').value = '';
+        document.getElementById('modal-err').classList.add('hidden');
+        document.getElementById('modal').classList.replace('hidden', 'flex');
+    }
+
+    function closeModal() {
+        document.getElementById('modal').classList.replace('flex', 'hidden');
+    }
+
+    async function saveBlock() {
+        const errEl = document.getElementById('modal-err'); 
+        errEl.classList.add('hidden');
+        
+        const floor = parseInt(document.getElementById('f-floor').value);
+        const code = parseInt(document.getElementById('f-code').value);
+        
+        if (isNaN(floor) || isNaN(code)) { 
+            errEl.textContent = 'Both Floor and Block Code must be valid numbers.'; 
+            errEl.classList.remove('hidden'); 
+            return; 
+        }
+        
+        const payload = { blockFloor: floor, blockCode: code };
+        const btn = document.getElementById('save-btn'); 
+        btn.disabled = true;
+        
+        try {
+            const res = await apiFetch('/api/v1/blocks', { 
+                method: 'POST', 
+                body: JSON.stringify(payload) 
+            });
+            
+            if (res && res.success) {
+                showToast('Block successfully created!');
+                closeModal();
+                loadBlocks();
+            } else if (res) {
+                errEl.textContent = res.message || 'Error occurred while saving.';
+                errEl.classList.remove('hidden');
+            }
+        } catch(e) { 
+            errEl.textContent = e.message; 
+            errEl.classList.remove('hidden'); 
+        } finally { 
+            btn.disabled = false; 
+        }
+    }
+
+    async function deleteBlock(floor, code) {
+        confirmAction('Are you sure you want to delete Floor ' + floor + ' Block ' + code + '?\n\nThis may fail if rooms are still assigned to this block.', async () => {
+            const res = await apiFetch('/api/v1/blocks?floor=' + floor + '&code=' + code, { method: 'DELETE' });
+            if (res && res.success) { 
+                showToast('Block deleted successfully.'); 
+                loadBlocks(); 
+            } else if (res && res.message) {
+                showToast(res.message, 'error');
+            } else {
+                showToast('Failed to delete block.', 'error');
+            }
+        });
+    }
+
+    // Initialize
+    loadBlocks();
+    </script>
+</section>
+</body>
+</html>
