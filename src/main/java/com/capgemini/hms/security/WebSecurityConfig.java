@@ -78,11 +78,30 @@ public class WebSecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/login",
+                                "/register",
+                                "/home",
+                                "/dashboard",
+                                "/patient/**",
+                                "/appointment/**",
+                                "/stay/**",
+                                "/physician/**",
+                                "/nurse/**",
+                                "/medication/**",
+                                "/medical-records/**",
+                                "/certification/**",
+                                "/room/**",
+                                "/department/**",
+                                "/prescription/**",
+                                "/procedure/**",
+                                "/shift/**",
+                                "/blocks/**",
                                 "/ui/**",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
-                                "/favicon.ico"
+                                "/favicon.ico",
+                                "/error",
+                                "/.well-known/**"
                         ).permitAll()
 
                         // 🔒 1. Master Data Management - ADMIN ONLY
@@ -92,20 +111,19 @@ public class WebSecurityConfig {
 
                         // 🔒 2. Clinical Operations
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/prescriptions/**").hasAnyRole("ADMIN", "DOCTOR")
-                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/stays/**", "/api/v1/patients/**", "/api/v1/medical-records/procedure/**")
-                        .hasAnyRole("ADMIN", "NURSE", "DOCTOR")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/stays/**", "/api/v1/patients/**", "/api/v1/medical-records/procedure/**").hasAnyRole("ADMIN", "NURSE", "DOCTOR")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/stays/**", "/api/v1/patients/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/medical-records/**")
                         .hasAnyRole("ADMIN", "DOCTOR", "NURSE", "PATIENT")
 
                         // 🔒 3. Scheduling & Appointments
                         .requestMatchers("/api/v1/appointments/my").hasRole("PATIENT")
-                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/appointments")
-                        .hasAnyRole("ADMIN", "NURSE", "PATIENT")
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/appointments/**")
-                        .hasAnyRole("ADMIN", "DOCTOR", "NURSE")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/appointments").hasAnyRole("ADMIN", "NURSE", "PATIENT")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/appointments/**").hasAnyRole("ADMIN", "DOCTOR", "NURSE", "PATIENT")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/appointments/**").hasAnyRole("ADMIN", "NURSE")
 
                         // 🔒 4. Reporting & Dashboards
-                        .requestMatchers("/api/v1/dashboard/**").hasRole("ADMIN")
+                        .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
 
                         // 🔒 5. General Read Access
                         .requestMatchers(org.springframework.http.HttpMethod.GET,
