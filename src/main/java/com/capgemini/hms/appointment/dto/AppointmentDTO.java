@@ -9,21 +9,32 @@ public class AppointmentDTO {
     @Schema(example = "1", description = "Unique ID of the appointment")
     private Integer appointmentId;
 
+    @NotNull
     @Schema(example = "100000001", description = "SSN of the patient")
     private Integer patientSsn;
 
-    @Schema(example = "501", description = "Employee ID of the nurse preparing the appointment (optional)")
-    private Integer prepNurseId; // Optional
+    @Schema(example = "John Doe", description = "Full name of the patient")
+    private String patientName;
 
+    @Schema(example = "501", description = "Employee ID of the nurse preparing the appointment (optional)")
+    private Integer prepNurseId;
+
+    @NotNull
     @Schema(example = "101", description = "Employee ID of the physician")
     private Integer physicianId;
 
+    @Schema(example = "Dr. Smith", description = "Full name of the physician")
+    private String physicianName;
+
+    @NotNull
     @Schema(example = "2026-04-10T14:30:00", description = "Start time of the appointment")
     private LocalDateTime start;
 
+    @NotNull
     @Schema(example = "2026-04-10T15:00:00", description = "End time of the appointment")
     private LocalDateTime end;
 
+    @NotBlank
     @Schema(example = "Room A-102", description = "Physical location or room for the examination")
     private String examinationRoom;
 
@@ -35,6 +46,19 @@ public class AppointmentDTO {
         this.patientSsn = patientSsn;
         this.prepNurseId = prepNurseId;
         this.physicianId = physicianId;
+        this.start = start;
+        this.end = end;
+        this.examinationRoom = examinationRoom;
+    }
+
+    public AppointmentDTO(Integer appointmentId, Integer patientSsn, String patientName, Integer prepNurseId, 
+                          Integer physicianId, String physicianName, LocalDateTime start, LocalDateTime end, String examinationRoom) {
+        this.appointmentId = appointmentId;
+        this.patientSsn = patientSsn;
+        this.patientName = patientName;
+        this.prepNurseId = prepNurseId;
+        this.physicianId = physicianId;
+        this.physicianName = physicianName;
         this.start = start;
         this.end = end;
         this.examinationRoom = examinationRoom;
