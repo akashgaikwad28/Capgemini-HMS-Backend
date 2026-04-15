@@ -48,7 +48,8 @@ class PatientServiceTest {
 
     @Test
     void registerPatient_shouldSaveNewPatientAndMarkActive() {
-        when(patientRepository.existsById(1001)).thenReturn(false);
+        when(patientRepository.findById(1001))
+                .thenReturn(Optional.empty());
         when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Patient saved = patientService.registerPatient(patient);
@@ -60,7 +61,8 @@ class PatientServiceTest {
 
     @Test
     void registerPatient_shouldThrowWhenDuplicateExists() {
-        when(patientRepository.existsById(1001)).thenReturn(true);
+        when(patientRepository.findById(1001))
+                .thenReturn(Optional.of(patient));
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> patientService.registerPatient(patient));
         assertTrue(ex.getMessage().contains("already exists"));
