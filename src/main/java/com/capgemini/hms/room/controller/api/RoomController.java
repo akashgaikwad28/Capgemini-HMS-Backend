@@ -23,6 +23,13 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/rooms")
 @Tag(name = "Room Management", description = "Endpoints for managing hospital rooms and blocks")
+/**
+ * REST controller exposing endpoints for managing Room entities.
+ * Provides CRUD operations, filtering, and pagination. Delegates business logic
+ * to `RoomService` and handles mapping between `Room` entities and `RoomDTO`.
+ * This class performs request validation and response mapping only; it does
+ * not implement domain business rules.
+ */
 public class RoomController {
 
     private final RoomService roomService;

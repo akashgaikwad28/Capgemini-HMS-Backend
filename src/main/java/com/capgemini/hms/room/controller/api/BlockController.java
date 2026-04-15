@@ -18,6 +18,13 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/blocks")
 @Tag(name = "Infrastructure: Blocks", description = "Endpoints for managing hospital blocks and floors")
+/**
+ * REST controller exposing endpoints for hospital block management.
+ * Responsible for request validation and response mapping for block-related
+ * operations (list, create, delete). Delegates persistence and domain
+ * operations to `BlockService` and maps between `Block` and `BlockDTO`.
+ * No domain business rules are implemented here.
+ */
 public class BlockController {
 
     private final BlockService blockService;

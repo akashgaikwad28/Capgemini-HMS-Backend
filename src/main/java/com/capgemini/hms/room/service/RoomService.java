@@ -11,6 +11,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+/**
+ * Service layer for `Room` entity operations. Encapsulates transactional
+ * boundaries for create, update, soft-delete and provides query methods for
+ * availability and filtering. Persistence is delegated to `RoomRepository`.
+ */
 public class RoomService {
 
     private final RoomRepository roomRepository;

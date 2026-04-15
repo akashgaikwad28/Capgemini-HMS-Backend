@@ -10,6 +10,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+/**
+ * Service component encapsulating persistence and transactional operations
+ * for `Block` entities. Provides retrieval, creation, and deletion logic and
+ * centralizes transactional boundaries. Higher-level validation and domain
+ * rules should be enforced before invoking these methods.
+ */
 public class BlockService {
 
     private final BlockRepository blockRepository;

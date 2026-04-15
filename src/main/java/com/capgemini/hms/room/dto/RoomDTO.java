@@ -4,6 +4,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Data Transfer Object for `Room` payloads used by REST endpoints and views.
+ * Carries minimal identity and state fields required for client interactions
+ * and input validation. This DTO intentionally avoids exposing entity
+ * relationships or persistence identifiers beyond `roomNumber`.
+ */
 public class RoomDTO {
     @NotNull
     @Schema(example = "101", description = "Unique room number")
