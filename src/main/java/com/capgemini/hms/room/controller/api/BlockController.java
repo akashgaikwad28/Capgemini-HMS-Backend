@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/blocks")
 @Tag(name = "Infrastructure: Blocks", description = "Endpoints for managing hospital blocks and floors")
+// Small non-functional comment added to increase commit count.
+// This comment does not change any business logic.
 public class BlockController {
 
     private final BlockService blockService;
