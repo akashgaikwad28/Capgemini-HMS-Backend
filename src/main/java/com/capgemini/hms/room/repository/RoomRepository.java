@@ -11,6 +11,11 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
+/**
+ * Repository interface for `Room` entities. Exposes custom queries to
+ * retrieve active/available rooms while centralizing soft-delete filtering
+ * logic. Extends `JpaRepository` for standard CRUD operations.
+ */
 public interface RoomRepository extends JpaRepository<Room, Integer> {
     @Query("SELECT r FROM Room r WHERE r.isDeleted = false")
     Page<Room> findAllActive(Pageable pageable);

@@ -3,6 +3,11 @@ package com.capgemini.hms.room.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Data Transfer Object for `Block` payloads exchanged with REST endpoints.
+ * Represents the composite identity components (floor and code) used to
+ * reference physical hospital blocks in API requests and responses.
+ */
 public class BlockDTO {
 
     @NotNull
