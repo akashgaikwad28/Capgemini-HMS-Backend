@@ -1,7 +1,5 @@
 package com.capgemini.hms.security;
 
-import com.capgemini.hms.security.jwt.AuthEntryPointJwt;
-import com.capgemini.hms.security.jwt.AuthTokenFilter;
 import com.capgemini.hms.security.services.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -9,28 +7,20 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
-// @EnableMethodSecurity // Disabled to move authorization to the filter chain (Authorization BEFORE Validation)
 public class WebSecurityConfig {
     @Autowired
     UserDetailsServiceImpl userDetailsService;
 
     @Autowired
-    private AuthEntryPointJwt unauthorizedHandler;
-
-    @Bean
-    public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter();
-    }
+    private CustomAuthenticationSuccessHandler successHandler;
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
@@ -54,15 +44,44 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
+        http
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+            )
             .exceptionHandling(exception -> exception
-                .authenticationEntryPoint(unauthorizedHandler)
-                .accessDeniedHandler(accessDeniedHandler))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .accessDeniedHandler(accessDeniedHandler)
+            )
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            )
             .authorizeHttpRequests(auth -> 
-                auth.requestMatchers("/api/v1/auth/**").permitAll()
+                auth.requestMatchers("/api/v1/auth/signup").permitAll()
                     .requestMatchers("/api/test/**").permitAll()
                     .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                    
+                    // 🟢 VIEW ROUTES & ASSETS (Internal HMS UI)
+                    .requestMatchers(
+                            "/",
+                            "/login",
+                            "/register",
+                            "/css/**",
+                            "/js/**",
+                            "/images/**",
+                            "/vendor/**",
+                            "/webjars/**",
+                            "/blocks/**",
+                            "/rooms/**",
+                            "/stays/**",
+                            "/patients/**",
+                            "/physicians/**",
+                            "/nurses/**",
+                            "/appointments/**",
+                            "/medications/**",
+                            "/prescriptions/**",
+                            "/procedures/**",
+                            "/on-calls/**",
+                            "/medical-records/**"
+                    ).permitAll()
                     
                     // 1. Master Data Management - ADMIN ONLY
                     .requestMatchers("/api/v1/blocks/**", "/api/v1/rooms/**").hasRole("ADMIN")
@@ -90,10 +109,21 @@ public class WebSecurityConfig {
                     .requestMatchers("/api/v1/patients/{ssn}/**").access(patientIdentityManager)
                     
                     .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/login")
+                .successHandler(successHandler)
+                .permitAll()
+            )
+            .logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/login?logout")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID", "XSRF-TOKEN")
+                .permitAll()
             );
 
         http.authenticationProvider(authenticationProvider());
-        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -20,16 +20,25 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException)
             throws IOException, ServletException {
         
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        String acceptHeader = request.getHeader("Accept");
+        String xRequestedWith = request.getHeader("X-Requested-With");
+        
+        // Check if it's an AJAX request or expects JSON
+        if ("XMLHttpRequest".equals(xRequestedWith) || (acceptHeader != null && acceptHeader.contains(MediaType.APPLICATION_JSON_VALUE))) {
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 
-        final Map<String, Object> body = new HashMap<>();
-        body.put("status", HttpServletResponse.SC_FORBIDDEN);
-        body.put("error", "Forbidden");
-        body.put("message", "Access Denied: You do not have the required clinical permissions to perform this operation.");
-        body.put("path", request.getServletPath());
+            final Map<String, Object> body = new HashMap<>();
+            body.put("status", HttpServletResponse.SC_FORBIDDEN);
+            body.put("error", "Forbidden");
+            body.put("message", "Access Denied: You do not have the required clinical permissions to perform this operation.");
+            body.put("path", request.getServletPath());
 
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.writeValue(response.getOutputStream(), body);
+            final ObjectMapper mapper = new ObjectMapper();
+            mapper.writeValue(response.getOutputStream(), body);
+        } else {
+            // Browser request - redirect to 403 error page
+            response.sendRedirect(request.getContextPath() + "/error/403");
+        }
     }
 }
