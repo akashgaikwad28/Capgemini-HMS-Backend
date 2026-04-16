@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied - Clinical Precision HMS</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@700;800&amp;display=swap" rel="stylesheet"/>
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+          tailwind.config = {
+            theme: {
+              extend: {
+                colors: {
+                  primary: "#006397",
+                  error: "#ba1a1a",
+                  surface: "#f8f9fa",
+                },
+                fontFamily: {
+                  headline: ["Manrope"],
+                  body: ["Inter"]
+                }
+              }
+            }
+          }
+    </script>
+</head>
+<body class="bg-surface min-h-screen flex items-center justify-center p-6">
+
+    <div class="max-w-md w-full text-center space-y-6">
+        <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-error/10 text-error mb-4">
+            <span class="material-symbols-outlined text-6xl">lock_person</span>
+        </div>
+        
+        <h1 class="text-4xl font-extrabold text-slate-900 font-headline">Access Denied</h1>
+        <p class="text-slate-600 font-medium">
+            You do not have the required clinical permissions to access this department or perform this operation.
+        </p>
+
+        <div class="pt-6 flex flex-col gap-3">
+            <a th:href="@{/}" class="w-full py-4 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">
+                Return to Dashboard
+            </a>
+            <p class="text-sm text-slate-400">
+                If you believe this is an error, please contact your System Administrator.
+            </p>
+        </div>
+        
+        <div class="mt-12 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+            ErrorCode: 403_PERMISSION_REQUISITION
+        </div>
+    </div>
+
+</body>
+</html>
