@@ -39,12 +39,6 @@ public class Appointment {
     @Column(name = "start", nullable = false)
     private LocalDateTime start;
 
-    @Column(name = "`end`", nullable = false)
-    private LocalDateTime end;
-
-    @Column(name = "start_time")
-    private LocalDateTime start;
-
     @Column(name = "examinationroom", nullable = false)
     private String examinationRoom;
 
